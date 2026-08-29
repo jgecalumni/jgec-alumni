@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model members {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  email               String   @unique
+  password            String
+  studentId           String?  @unique
+  nickname            String?  @default("")
+  passingYear         Int
+  department          String
+  residentialAddress  String
+  professionalAddress String
+  photo               String
+  photo_public_id     String
+  receipt             String?
+  receipt_public_id   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now())
+}
+
+model Scholarships {
+  id                      Int                      @id @default(autoincrement())
+  name                    String                   @db.VarChar(200)
+  subtitle                String                   @default("") @db.VarChar(200)
+  providerName            String                   @db.VarChar(200)
+  providerImage           String                   @db.VarChar(200)
+  providerImage_public_id String                   @db.VarChar(200)
+  providerDepartment      String                   @db.VarChar(200)
+  providerPassingYear     Int                      @default(0)
+  providerDescription     String                   @db.Text
+  description             String                   @db.Text
+  whoCanApply             String                   @db.VarChar(500)
+  whenToApply             String                   @db.VarChar(500)
+  ageLimit                String                   @db.VarChar(500)
+  amountDetails           String                   @db.VarChar(500)
+  semRequire              String                   @default("1st Sem") @db.VarChar(500)
+  isActive                Boolean                  @default(true)
+  department              String                   @default("All") @db.VarChar(500)
+  startDate               DateTime?
+  endDate                 DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now())
+  scholarshipApplicants   ScholarshipApplication[]
+}
+
+model ScholarshipApplication {
+  id                          Int          @id @default(autoincrement())
+  scholarshipId               Int
+  scholarshipDetails          Scholarships @relation(fields: [scholarshipId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  name                        String
+  studentId                   String
+  dob                         String
+  contactHome                 String
+  contact                     String
+  email                       String
+  numberofdirectfamilyMembers Int
+  fatherOccupation            String
+  totalEarningMembers         Int?
+  totalFamilyIncome           Int?
+  eachFamilyIncome            Int?
+  jgecIntakeYear              String
+  jgecPassingYear             String
+  extraCurricularActivities   String?      @db.VarChar(1000)
+  percentHigherSecondary      String
+  sem_1st                     String?
+  sem_2nd                     String?
+  sem_3rd                     String?
+  sem_4th                     String?
+  sem_5th                     String?
+  rank                        Int?
+  average                     String
+  department                  String
+  residentialAddress          String
+  specialAchievement          String?      @db.VarChar(1000)
+  jobCampusing                String       @default("")
+  document                    String?      @db.VarChar(500)
+  createdAt                   DateTime     @default(now())
+  updatedAt                   DateTime     @updatedAt
+}
+
+model Notice {
+  id             Int      @id @default(autoincrement())
+  title          String
+  description    String   @db.VarChar(4000)
+  date           String
+  link           String?
+  link_public_id String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model Event {
+  id                 Int             @id @default(autoincrement())
+  name               String          @db.VarChar(500)
+  shortDescription   String          @db.VarChar(500)
+  details            String          @db.VarChar(10000)
+  event_thumbnail    String          @db.VarChar(500)
+  event_thumbnail_id String?         @default("")
+  date               String
+  time               String
+  location           String          @db.VarChar(500)
+  hostName           String
+  hostDetails        String          @db.VarChar(500)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @default(now())
+  schedule           EventSchedule[]
+}
+
+model EventSchedule {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  Event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  startTime String
+  endTime   String
+  activity  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model ScholarshipDocuments {
+  id             Int     @id @default(autoincrement())
+  title          String
+  link           String?
+  link_public_id String?
+}
+
+model KanchenjungaDocuments {
+  id             Int     @id @default(autoincrement())
+  title          String
+  link           String?
+  link_public_id String?
+}
+
+model GivingBackDocuments {
+  id             Int     @id @default(autoincrement())
+  title          String
+  link           String?
+  link_public_id String?
+}
+
+model AgmMomDocuments {
+  id             Int     @id @default(autoincrement())
+  title          String
+  link           String?
+  link_public_id String?
+}
+
+model AuditReport {
+  id             Int     @id @default(autoincrement())
+  title          String
+  link           String?
+  link_public_id String?
+}
+
+model GalleryCategory {
+  id     Int             @id @default(autoincrement())
+  name   String
+  images GalleryImages[]
+}
+
+model GalleryImages {
+  id                Int             @id @default(autoincrement())
+  galleryCategoryId Int
+  category          GalleryCategory @relation(fields: [galleryCategoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  image             String?
+  image_public_id   String?
+}
+
+model ReceiptDetails {
+  id                         Int      @id @default(autoincrement())
+  name                       String
+  email                      String?
+  amount                     Int
+  transactionId              String
+  gender                     String   @default("Male")
+  panId                      String?
+  date                       String   @default("")
+  donationFor                String
+  phone                      String
+  passoutYear                Int?     @default(0)
+  paymentStatus              String   @default("Pending")
+  receipt                    String?
+  receipt_public_id          String?
+  generatedReceipt           String?
+  generatedReceipt_public_id String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @default(now())
+}
+
+model Contribution {
+  id                Int      @id @default(autoincrement())
+  slNo              Int
+  nameOfAluminus    String
+  graduationYear    Int
+  amount            Float
+  depositedOn       String
+  mobileNo          String?
+  email             String?
+  pdfLink           String?
+  pdfLink_public_id String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  tag       String   // Event, Notice, Achievement, Reunion
+  title     String
+  excerpt   String   @db.Text
+  date      String
+  location  String
+  createdAt DateTime @default(now())
+  media     Media[]
+}
+
+model Media {
+  id     Int      @id @default(autoincrement())
+  type   String   // youtube, facebook, image
+  url    String   @db.Text
+  newsId Int
+  news   News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+}
+
+model GlobalSettings {
+  id                     Int       @id @default(autoincrement())
+  scholarshipStartDate   DateTime?
+  scholarshipEndDate     DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}

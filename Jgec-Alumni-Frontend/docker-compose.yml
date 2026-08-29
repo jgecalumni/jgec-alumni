@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Enable polling for hot-reloading (useful in Docker environments)
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      # Add any necessary dev env variables here
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/v1/api
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000

@@ -1,0 +1,113 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract repository name to lowercase
+        id: repo_name
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      # --- BACKEND ---
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Jgec_Alumni_Backend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO }}/jgec-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- FRONTEND ---
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Jgec-Alumni-Frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO }}/jgec-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.yourdomain.com/v1/api
+            NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- ADMIN ---
+      - name: Build and push Admin
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Jgec-alumni-admin
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO }}/jgec-admin:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://backend.jgecalumni.in/v1/api
+            NEXT_PUBLIC_BACKEND_URL=https://backend.jgecalumni.in
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-to-vps:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract repository name to lowercase
+        id: repo_name
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Copy docker-compose.prod.yml to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/var/www/jgec-alumni"
+
+      - name: Execute deployment commands via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/jgec-alumni
+            
+            # Export the lowercase repository name so docker-compose.prod.yml can substitute it
+            export GITHUB_REPOSITORY_LOWER=${{ env.REPO }}
+            
+            # Pull the latest images
+            docker-compose -f docker-compose.prod.yml pull
+            
+            # Restart the services in detached mode
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Clean up old dangling images to save disk space
+            docker image prune -f
