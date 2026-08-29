@@ -104,10 +104,10 @@ jobs:
             export GITHUB_REPOSITORY_LOWER=${{ env.REPO }}
             
             # Pull the latest images
-            docker-compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml pull
             
             # Restart the services in detached mode
-            docker-compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d
             
             # Clean up old dangling images to save disk space
             docker image prune -f
