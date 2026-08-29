@@ -52,8 +52,8 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.REPO }}/jgec-frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=https://api.yourdomain.com/v1/api
-            NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
+            NEXT_PUBLIC_API_URL=https://backend.jgecalumni.in/v1/api
+            NEXT_PUBLIC_BACKEND_URL=https://backend.jgecalumni.in
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
