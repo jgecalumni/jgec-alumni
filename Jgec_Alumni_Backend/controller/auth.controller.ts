@@ -224,7 +224,6 @@ export const loginMember = asyncHandler(async (req: Request, res: Response) => {
 		return;
 	}
 
-	// generate token & cookies
 	const accessToken = jwt.sign(
 		{
 			userId: member.id,
