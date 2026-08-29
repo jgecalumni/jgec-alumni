@@ -257,13 +257,13 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 		httpOnly: true,
 		secure: true,
 		sameSite: "none",
-		// domain: ".jgecalumni.in",
+		domain: ".jgecalumni.in",
 	});
 	res.clearCookie("tokenMoney", {
 		httpOnly: true,
 		secure: true,
 		sameSite: "none",
-		// domain: ".jgecalumni.in",
+		domain: ".jgecalumni.in",
 	});
 	res.status(200).json({
 		message: "Logout successful",
