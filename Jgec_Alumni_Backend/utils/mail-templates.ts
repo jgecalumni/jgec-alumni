@@ -60,42 +60,90 @@ export const ScholarshipApplicationMail = (
 	scholarship: string
 ) => {
 	return `
-        <body
-        style="font-family: Arial, sans-serif; line-height: 1.6; background-color: #f4f4f4; padding: 20px; margin: 0;">
-        <div
-            style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-            <h1 style="text-align: center; color: #333;">Scholarship Application Received</h1>
+        
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #eef1f5; padding: 24px; margin: 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
 
-            <p style="font-size: 16px; color: #555;">
-                Dear <strong>${applicant}</strong>,
-            </p>
-
-            <p style="font-size: 16px; color: #555;">
-                We are pleased to inform you that we have received your application for the <strong>${scholarship}</strong>.
-            </p>
-
-            <p style="font-size: 16px; color: #555;">
-                Your application is currently under review by our team. The review process involves verifying your
-                academic achievements,
-                financial status, and many more. 
-                Once the review
-                is complete, we will provide the list in the notice section.
-            </p>
-
-            <p style="font-size: 16px; color: #555;">
-                If additional information is required, our team will contact you directly. In the meantime, If you have any questions, feel free to reach out Dr. Mousam Chatterjee (+91 9433480022).
-            </p>
-
-            <p style="font-size: 16px; font-weight: bold; color: #333;">
-                Thank you for applying, and we wish you the best of luck!
-            </p>
-
-            <p style="font-size: 16px; color: #555; margin-top: 20px;">
-                Best regards,<br>
-                <strong>JGEC Alumni Association</strong>
-            </p>
+    <!-- Header / Logo band -->
+    <tr>
+      <td style="background-color: #0b2e59; padding: 28px 20px; text-align: center;">
+        <img src="https://res.cloudinary.com/daanphoru/image/upload/v1788075752/Logo_f6moef.webp"
+             alt="JGEC Alumni Association Logo"
+             width="72"
+             style="display: block; margin: 0 auto 12px auto; border-radius: 8px;">
+        <div style="color: #ffffff; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">
+          JGEC Alumni Association
         </div>
-    </body>
+      </td>
+    </tr>
+
+    <!-- Status banner -->
+    <tr>
+      <td style="background-color: #eaf6ec; padding: 14px 20px; text-align: center; border-bottom: 1px solid #d7ecdb;">
+        <span style="color: #1f7a3d; font-weight: bold; font-size: 14px;">✓ Application Received</span>
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 28px;">
+        
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          Dear <strong>${applicant}</strong>,
+        </p>
+
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          We are pleased to inform you that we have received your application for the
+          <strong style="color: #0b2e59;">${scholarship}</strong>.
+        </p>
+
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          Your application is currently under review by our team. The review process involves
+          verifying your academic achievements, financial status, and other supporting details.
+          Once the review is complete, we will provide the results in the notice section.
+        </p>
+
+        <!-- Info card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f9fc; border-left: 4px solid #0b2e59; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 16px 18px;">
+              <p style="font-size: 15px; color: #444; margin: 0;">
+                If additional information is required, our team will contact you directly.
+                In the meantime, for any questions, feel free to reach out to:
+              </p>
+              <p style="font-size: 15px; color: #0b2e59; margin: 10px 0 0 0; font-weight: bold;">
+                Dr. Mousam Chatterjee
+              </p>
+              <p style="font-size: 15px; margin: 2px 0 0 0;">
+                <a href="tel:+919433480022" style="color: #0b2e59; text-decoration: none;">+91 94334 80022</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 16px; font-weight: bold; color: #333; margin: 24px 0 0 0;">
+          Thank you for applying, and we wish you the best of luck!
+        </p>
+
+        <p style="font-size: 16px; color: #555; margin-top: 24px;">
+          Best regards,<br>
+          <strong>JGEC Alumni Association</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f4f6f9; padding: 16px 20px; text-align: center; border-top: 1px solid #e6e9ee;">
+        <p style="font-size: 12px; color: #888; margin: 0;">
+          Jalpaiguri Government Engineering College &middot; Alumni Association
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</body>
+
         `;
 };
 

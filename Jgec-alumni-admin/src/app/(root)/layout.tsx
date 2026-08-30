@@ -131,7 +131,7 @@ export default function Layout({
 									})}
 
 									{/* Documents Dropdown */}
-									<SidebarMenuItem className="mt-2">
+									<SidebarMenuItem className="mt-2 pb-4">
 										<DropdownMenu>
 											<DropdownMenuTrigger className={`flex w-full items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-auto group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:group-hover:px-3 group-data-[collapsible=icon]:group-hover:py-2.5 py-2.5 transition-all duration-300 group focus:outline-none hover:translate-x-1 ${pathname.includes('/documents') ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground font-medium"}`}>
 												<span className={`flex items-center justify-center shrink-0 w-8 h-8 rounded-lg transition-all duration-300 ${pathname.includes('/documents') ? "bg-background/60 shadow-sm scale-110" : "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 shadow-sm"}`}>
