@@ -27,7 +27,7 @@ export const clearCacheMiddleware = () => {
                         // If we found keys, delete them
                         if (keysToDelete.length > 0) {
                             // Using spread operator (...) to ensure node-redis handles the array correctly
-                            await redisClient.del(...keysToDelete);
+                            await redisClient.del(keysToDelete);
                             console.log(`[Cache] Successfully cleared ${keysToDelete.length} cached routes.`);
                         }
                     } catch (error) {
