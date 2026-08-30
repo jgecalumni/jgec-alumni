@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JGEC Alumni Association Platform - Documentation</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        h1, h2, h3 {
+            color: #111827;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+        }
+        
+        p, li {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+        }
+        
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #ef4444;
+        }
+        
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        
+        .tree {
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            color: #334155;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background-color: #e0e7ff;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <span class="badge">Documentation</span>
+    <h1>JGEC Alumni Association Platform</h1>
+    
+    <p>Welcome to the <strong>JGEC Alumni Association</strong> platform repository. This project consists of a main public-facing frontend, an admin dashboard, and a robust Node.js backend. The entire stack is containerized using Docker for seamless local development and production deployment.</p>
+
+    <h2>🏗️ Architecture & Services</h2>
+    <p>The platform is a monolithic repository containing three primary services:</p>
+    <ul>
+        <li><strong>Jgec-Alumni-Frontend</strong>: The main public website for alumni, built with <strong>Next.js</strong>, Tailwind CSS, and shadcn/ui.</li>
+        <li><strong>Jgec-alumni-admin</strong>: The administrative dashboard for managing alumni data, built with <strong>Next.js</strong>.</li>
+        <li><strong>Jgec_Alumni_Backend</strong>: The core API server, built with <strong>Node.js, Express, and Prisma</strong> (ORM).</li>
+        <li><strong>Database & Cache</strong>: Relies on a <strong>MySQL</strong> database and a <strong>Redis</strong> instance for caching.</li>
+    </ul>
+
+    <h2>📁 File Structure</h2>
+    <pre class="tree"><code>jgec-alumni/
+├── Jgec-Alumni-Frontend/      # Next.js Public Frontend
+│   ├── src/                   # Source code (pages, components, styles)
+│   ├── public/                # Static assets
+│   ├── next.config.mjs        # Next.js configuration
+│   └── tailwind.config.ts     # Tailwind CSS configuration
+├── Jgec-alumni-admin/         # Next.js Admin Dashboard
+│   ├── src/                   # Source code
+│   ├── public/                # Static assets
+│   └── next.config.mjs        # Next.js configuration
+├── Jgec_Alumni_Backend/       # Node.js/Express API Backend
+│   ├── prisma/                # Prisma schema and migrations
+│   ├── src/controller/        # API Controllers
+│   ├── src/router/            # API Routes
+│   ├── src/middleware/        # Custom middlewares
+│   └── index.ts               # Application entry point
+├── docker-compose.yml         # Docker Compose for Local Development
+├── docker-compose.prod.yml    # Docker Compose for Production
+├── .env                       # Environment Variables (Secrets)
+└── README.md                  # Project Documentation</code></pre>
+
+    <h2>⚙️ Environment Variables (<code>.env</code>)</h2>
+    <p>You need a <code>.env</code> file at the root of the project. Below is the list of required variables. <strong>Do not commit actual secrets to version control.</strong></p>
+    <pre><code># Database Configuration
+DATABASE_URL="mysql://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;db_name&gt;"
+
+# Authentication
+JWT_SECRET="your_jwt_secret_key"
+
+# CORS & URLs
+FORNTEND_URI_DEV="http://localhost:4000"
+FORNTEND_URI_PROD="https://admin.jgecalumni.in"
+FORNTEND_URI_MAIN="https://jgecalumni.in"
+FORNTEND_URI_MAIN_TWO="https://www.jgecalumni.in"
+FORNTEND_URI_ADMIN_DEV="http://localhost:3000"
+
+# Email Configuration (Nodemailer)
+EMAIL_USERNAME="your_email@gmail.com"
+EMAIL_PASSWORD="your_app_password"
+MONEY_EMAIL="receipt_email@gmail.com"
+MONEY_PASSWORD="receipt_app_password"
+
+# Cloudinary (Image Storage)
+CLOUDINARY_CLOUD_NAME="your_cloud_name"
+CLOUDINARY_API_KEY="your_api_key"
+CLOUDINARY_API_SECRET="your_api_secret"
+
+# Initial Admin Credentials
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="admin_password"
+
+# Google Sheets / Service Account (Frontend envs)
+CLIENT_EMAIL="service-account@..."
+CLIENT_ID="your_client_id"
+PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+SPREADSHEET_ID="your_spreadsheet_id"
+
+# Application URLs & Configs
+NEXT_PUBLIC_API_URL="/v1/api"
+NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
+INTERNAL_BACKEND_URL="http://backend:8000"
+REDIS_URL="redis://redis:6379"
+GENERATE_SOURCEMAP="false"
+GITHUB_REPOSITORY_LOWER="jgecalumni/jgec-alumni"</code></pre>
+    <p><em>(Note: The Next.js apps receive <code>NEXT_PUBLIC_API_URL</code> and <code>NEXT_PUBLIC_BACKEND_URL</code> as build arguments via Docker Compose.)</em></p>
+
+    <h2>🚀 How to Run (Local Development)</h2>
+    <p>The easiest way to run the entire stack locally is using <strong>Docker Compose</strong>.</p>
+    
+    <h3>Prerequisites</h3>
+    <ul>
+        <li><a href="https://docs.docker.com/get-docker/" target="_blank">Docker</a> and <a href="https://docs.docker.com/compose/install/" target="_blank">Docker Compose</a></li>
+        <li>Make sure ports <code>3000</code>, <code>4000</code>, <code>8000</code>, and <code>6379</code> are free on your local machine.</li>
+    </ul>
+
+    <h3>Steps</h3>
+    <ol>
+        <li><strong>Clone the repository</strong> and navigate to the project root:
+            <pre><code>cd jgec-alumni</code></pre>
+        </li>
+        <li><strong>Create the <code>.env</code> file</strong> in the root directory and fill it with your development values (as shown above).</li>
+        <li><strong>Start the containers</strong> using the local Docker Compose file:
+            <pre><code>docker-compose -f docker-compose.yml up --build</code></pre>
+        </li>
+        <li><strong>Access the Applications</strong>:
+            <ul>
+                <li><strong>Frontend</strong>: http://localhost:4000</li>
+                <li><strong>Admin Dashboard</strong>: http://localhost:3000</li>
+                <li><strong>Backend API</strong>: http://localhost:8000</li>
+                <li><strong>Redis</strong>: localhost:6379</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>🌍 How to Run (Production)</h2>
+    <p>For production, the deployment uses <code>docker-compose.prod.yml</code>, which pulls pre-built Docker images from GitHub Container Registry (GHCR) instead of building them from source on the server.</p>
+    
+    <h3>Steps</h3>
+    <ol>
+        <li><strong>Server Setup</strong>: Ensure Docker and Docker Compose are installed on your production server.</li>
+        <li><strong>Transfer Files</strong>: Copy the <code>docker-compose.prod.yml</code> and your production <code>.env</code> file to the server.</li>
+        <li><strong>Authenticate with GHCR</strong> (if images are private):
+            <pre><code>echo $CR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin</code></pre>
+        </li>
+        <li><strong>Start the Services</strong>:
+            <pre><code>docker-compose -f docker-compose.prod.yml up -d</code></pre>
+        </li>
+        <li><strong>Reverse Proxy & SSL</strong>: It is highly recommended to put an NGINX reverse proxy in front of ports <code>3000</code>, <code>4000</code>, and <code>8000</code> to handle SSL (HTTPS) termination.</li>
+    </ol>
+
+    <h2>🛠️ Manual Setup (Without Docker)</h2>
+    <p>If you prefer to run services individually without Docker:</p>
+    <ol>
+        <li><strong>Backend</strong>:
+            <pre><code>cd Jgec_Alumni_Backend
+npm install # or pnpm install / yarn install
+npx prisma generate
+npm run dev</code></pre>
+        </li>
+        <li><strong>Frontend</strong>:
+            <pre><code>cd Jgec-Alumni-Frontend
+npm install
+npm run dev</code></pre>
+        </li>
+        <li><strong>Admin</strong>:
+            <pre><code>cd Jgec-alumni-admin
+npm install
+npm run dev</code></pre>
+        </li>
+    </ol>
+    <p><em>(Note: You will also need to have a Redis instance and MySQL database running locally and update your <code>.env</code> accordingly).</em></p>
+
+</div>
+
+</body>
+</html>
