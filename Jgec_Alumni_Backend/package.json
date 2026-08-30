@@ -34,6 +34,8 @@
     "pdfkit": "^0.19.1",
     "redis": "^6.2.1",
     "streamifier": "^0.1.1",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
@@ -48,6 +50,8 @@
     "@types/number-to-words": "^1.2.3",
     "@types/pdfkit": "^0.17.6",
     "@types/streamifier": "^0.1.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "prisma": "^7.9.1",
     "typescript": "5.7.3"
   }

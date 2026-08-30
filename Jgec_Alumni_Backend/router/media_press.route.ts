@@ -5,6 +5,15 @@ import authentication from '../middleware/authentication';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Media_press
+ *   description: API for managing Media_press
+ */
+
+
+
 
 // Allows up to 10 images per news post
 router.post('/', upload.array('images', 10), createNews);
