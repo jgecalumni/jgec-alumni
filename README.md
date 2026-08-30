@@ -13,6 +13,14 @@ The platform is a monolithic repository containing three primary services:
 
 ---
 
+## 📖 API Documentation
+
+The backend provides comprehensive Swagger API documentation for all endpoints:
+- **Local (Development):** [http://localhost:8000/api-docs](http://localhost:8000/api-docs)
+- **Production:** [https://backend.jgecalumni.in/api-docs](https://backend.jgecalumni.in/api-docs)
+
+---
+
 ## 📁 File Structure
 
 ```text
