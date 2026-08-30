@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { redisClient } from "../utils/redis"; // Make sure this path is correct for your project!
+import redisClient from "../utils/redis";
 
 export const clearCacheMiddleware = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
