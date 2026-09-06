@@ -9,6 +9,7 @@ import {
 	useAllScholarshipsQuery,
 	useDeleteScholarshipsMutation,
 } from "@/store/feature/scholarship-feature";
+import { useGetCountQuery } from "@/store/feature/dashboard-feature";
 import toast from "react-hot-toast";
 import { debounce } from "@/utils";
 import Loading from "@/app/loading";
@@ -43,6 +44,7 @@ const Scholarships: React.FC = () => {
 		page: page,
 		search: searchQuery,
 	});
+	const { data: countData } = useGetCountQuery();
 	
 	const [
 		deleteScholarship,
@@ -151,9 +153,13 @@ const Scholarships: React.FC = () => {
 							placeholder="Search for scholarships..."
 						/>
 					</div>
-					
-					<div className="text-sm text-muted-foreground font-medium whitespace-nowrap px-4 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-inner">
-						Showing <span className="text-foreground font-bold">{data?.scholarships?.length || 0}</span> results
+					<div className="flex gap-2">
+						<div className="text-sm text-muted-foreground font-medium whitespace-nowrap px-4 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-inner">
+							Total Applicants: <span className="text-foreground font-bold">{countData?.data?.scholarshipApplications || 0}</span>
+						</div>
+						<div className="text-sm text-muted-foreground font-medium whitespace-nowrap px-4 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-inner">
+							Showing <span className="text-foreground font-bold">{data?.scholarships?.length || 0}</span> results
+						</div>
 					</div>
 				</div>
 				
@@ -180,6 +186,11 @@ const Scholarships: React.FC = () => {
 									scope="col"
 									className="px-6 py-4 font-bold tracking-wider">
 									Provider Image
+								</th>
+								<th
+									scope="col"
+									className="px-6 py-4 font-bold tracking-wider text-center">
+									Applicants
 								</th>
 								<th
 									scope="col"
@@ -218,6 +229,9 @@ const Scholarships: React.FC = () => {
 												/>
 											</div>
 										</td>
+										<td className="px-6 py-4 text-center font-semibold text-indigo-600 dark:text-indigo-400">
+											{item._count?.scholarshipApplicants || 0}
+										</td>
 										<td className="px-6 py-4">
 											<div className="flex items-center justify-end gap-2">
 												<button
@@ -253,7 +267,7 @@ const Scholarships: React.FC = () => {
 							) : (
 								<tr>
 									<td
-										colSpan={5}
+										colSpan={6}
 										className="px-6 py-12 text-center text-muted-foreground bg-transparent">
 										<div className="flex flex-col items-center justify-center space-y-3">
 											<svg className="w-12 h-12 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">

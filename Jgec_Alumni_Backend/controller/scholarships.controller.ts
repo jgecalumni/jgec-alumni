@@ -40,36 +40,39 @@ export const getAllScholarshipsAdmin = asyncHandler(
 				department: true,
 				startDate: true,
 				endDate: true,
-				scholarshipApplicants: {
-					select: {
-						id: true,
-						name: true,
-						email: true,
-						contactHome: true,
-						contact: true,
-						department: true,
-						studentId: true,
-						dob: true,
-						fatherOccupation: true,
-						numberofdirectfamilyMembers: true,
-						totalEarningMembers: true,
-						totalFamilyIncome: true,
-						eachFamilyIncome: true,
-						jgecIntakeYear: true,
-						jgecPassingYear: true,
-						extraCurricularActivities: true,
-						percentHigherSecondary: true,
-						sem_1st: true,
-						sem_2nd: true,
-						sem_3rd: true,
-						sem_4th: true,
-						sem_5th: true,
-						average: true,
-						residentialAddress: true,
-						specialAchievement: true,
-						jobCampusing: true,
-					},
-				},
+				// scholarshipApplicants: {
+				// 	select: {
+				// 		id: true,
+				// 		name: true,
+				// 		email: true,
+				// 		contactHome: true,
+				// 		contact: true,
+				// 		department: true,
+				// 		studentId: true,
+				// 		dob: true,
+				// 		fatherOccupation: true,
+				// 		numberofdirectfamilyMembers: true,
+				// 		totalEarningMembers: true,
+				// 		totalFamilyIncome: true,
+				// 		eachFamilyIncome: true,
+				// 		jgecIntakeYear: true,
+				// 		jgecPassingYear: true,
+				// 		extraCurricularActivities: true,
+				// 		percentHigherSecondary: true,
+				// 		sem_1st: true,
+				// 		sem_2nd: true,
+				// 		sem_3rd: true,
+				// 		sem_4th: true,
+				// 		sem_5th: true,
+				// 		average: true,
+				// 		residentialAddress: true,
+				// 		specialAchievement: true,
+				// 		jobCampusing: true,
+				// 	},
+				// },
+				_count: {
+					select: { scholarshipApplicants: true }
+				}
 			},
 		});
 
@@ -146,6 +149,9 @@ export const getAllScholarships = asyncHandler(
 				// 		jobCampusing: true,
 				// 	},
 				// },
+				_count: {
+					select: { scholarshipApplicants: true }
+				}
 			},
 		});
 
@@ -220,6 +226,9 @@ export const getScholarshipById = asyncHandler(
 				// 		jobCampusing: true,
 				// 	},
 				// },
+				_count: {
+					select: { scholarshipApplicants: true }
+				}
 			},
 		});
 
@@ -520,7 +529,6 @@ export const deleteScholarship = asyncHandler(
 export const getAllScholarshipApplications = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { limit, page, search, scholarshipId } = req.query;
-		console.log(req.query);
 
 		const totalCount = await prisma.scholarshipApplication.count();
 		const allApplications = await prisma.scholarshipApplication.findMany({
@@ -580,7 +588,7 @@ export const getAllScholarshipApplications = asyncHandler(
 			data: allApplications,
 			error: false,
 			success: true,
-			docCount: allApplications.length,
+			totalCount: allApplications.length,
 			totalPages: Math.ceil(totalCount / (Number(limit) || 10)),
 			page: Number(page) || 1,
 			limit: Number(limit) || 10,

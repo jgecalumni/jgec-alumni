@@ -21,123 +21,139 @@ import "react-quill/dist/quill.bubble.css";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function Home() {
-	const { data, error, isLoading, isError } = useGetCountQuery();
-	const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
-	
-	const { data: membersData, isLoading: membersLoading } = useGetAllMembersQuery({ limit: 5, page: 1 });
-	const { data: noticesData, isLoading: noticesLoading } = useGetAllNoticesQuery({ limit: 5, page: 1 });
-	const { data: eventsData, isLoading: eventsLoading } = useAllEventsQuery({ limit: 5, page: 1 });
-	const { data: scholarshipsData, isLoading: scholarshipsLoading } = useAllScholarshipsQuery({ limit: 5, page: 1 });
+    const { data, error, isLoading, isError } = useGetCountQuery();
+    const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (isError) {
-			toast.error((error as any)?.data?.message || "Failed to fetch data");
-		}
-	}, [isError, error]);
+    const { data: membersData, isLoading: membersLoading } = useGetAllMembersQuery({ limit: 5, page: 1 });
+    const { data: noticesData, isLoading: noticesLoading } = useGetAllNoticesQuery({ limit: 5, page: 1 });
+    const { data: eventsData, isLoading: eventsLoading } = useAllEventsQuery({ limit: 5, page: 1 });
+    const { data: scholarshipsData, isLoading: scholarshipsLoading } = useAllScholarshipsQuery({ limit: 5, page: 1 });
 
-	if (isLoading) return <Loading />;
+    useEffect(() => {
+        if (isError) {
+            toast.error((error as any)?.data?.message || "Failed to fetch data");
+        }
+    }, [isError, error]);
 
-	const counts = data?.data;
+    if (isLoading) return <Loading />;
 
-	return (
-		<div className="w-full space-y-8">
-			<div className="flex flex-col gap-2">
-				<h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground">Welcome back, Admin</h1>
-				<p className="text-muted-foreground">Here is an overview of your platform.</p>
-			</div>
-			
-			<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-				<Link href="/members" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
-					<div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
-						<div className="flex items-center justify-between space-y-0 pb-4">
-							<h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-								Total Members
-							</h3>
-							<div className="p-2 bg-primary/10 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-								<FaUser size={18} />
-							</div>
-						</div>
-						<div className="text-3xl font-bold text-foreground">
-							{counts?.members || 0}
-						</div>
-					</div>
-				</Link>
-				
-				<Link href="/scholarship" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
-					<div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
-						<div className="flex items-center justify-between space-y-0 pb-4">
-							<h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-								Scholarships
-							</h3>
-							<div className="p-2 bg-indigo-500/10 rounded-full text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-								<IoSchool size={20} />
-							</div>
-						</div>
-						<div className="text-3xl font-bold text-foreground">
-							{counts?.scholarships || 0}
-						</div>
-					</div>
-				</Link>
-				
-				<Link href="/notices" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
-					<div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
-						<div className="flex items-center justify-between space-y-0 pb-4">
-							<h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-								Active Notices
-							</h3>
-							<div className="p-2 bg-amber-500/10 rounded-full text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-								<IoIosCreate size={20} />
-							</div>
-						</div>
-						<div className="text-3xl font-bold text-foreground">
-							{counts?.notices || 0}
-						</div>
-					</div>
-				</Link>
-				
-				<Link href="/events" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
-					<div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
-						<div className="flex items-center justify-between space-y-0 pb-4">
-							<h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-								Upcoming Events
-							</h3>
-							<div className="p-2 bg-emerald-500/10 rounded-full text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-								<IoIosCreate size={20} />
-							</div>
-						</div>
-						<div className="text-3xl font-bold text-foreground">
-							{counts?.events || 0}
-						</div>
-					</div>
-				</Link>
+    const counts = data?.data;
 
-				<Link href="/payments" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl sm:col-span-2 lg:col-span-1 hidden lg:block xl:hidden 2xl:block">
-					<div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50 h-full">
-						<div className="flex items-center justify-between space-y-0 pb-4">
-							<h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-								Recent Payments
-							</h3>
-							<div className="p-2 bg-rose-500/10 rounded-full text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors">
-								<FaMoneyCheckAlt size={20} />
-							</div>
-						</div>
-						<div className="text-3xl font-bold text-foreground">
-							View
-						</div>
-					</div>
-				</Link>
-			</div>
+    return (
+        <div className="w-full space-y-8">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground">Welcome back, Admin</h1>
+                <p className="text-muted-foreground">Here is an overview of your platform.</p>
+            </div>
 
-			<DashboardChart counts={counts} />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <Link href="/members" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Total Members
+                            </h3>
+                            <div className="p-2 bg-primary/10 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <FaUser size={18} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            {counts?.members || 0}
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/scholarship" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Scholarships
+                            </h3>
+                            <div className="p-2 bg-indigo-500/10 rounded-full text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                                <IoSchool size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            {counts?.scholarships || 0}
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/scholarship" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Applications
+                            </h3>
+                            <div className="p-2 bg-indigo-500/10 rounded-full text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                                <IoSchool size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            {counts?.scholarshipApplications || 0}
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/notices" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Active Notices
+                            </h3>
+                            <div className="p-2 bg-amber-500/10 rounded-full text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <IoIosCreate size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            {counts?.notices || 0}
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/events" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Upcoming Events
+                            </h3>
+                            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                <IoIosCreate size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            {counts?.events || 0}
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/payments" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl sm:col-span-2 lg:col-span-1 hidden lg:block xl:hidden 2xl:block">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/50 h-full">
+                        <div className="flex items-center justify-between space-y-0 pb-4">
+                            <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                Recent Payments
+                            </h3>
+                            <div className="p-2 bg-rose-500/10 rounded-full text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                                <FaMoneyCheckAlt size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-foreground">
+                            View
+                        </div>
+                    </div>
+                </Link>
+            </div>
+
+            <DashboardChart counts={counts} />
 
             {/* RECENT ACTIVITY GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 {/* Recent Members */}
                 <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <User size={18} className="text-primary"/>
+                            <User size={18} className="text-primary" />
                             <h3 className="font-semibold text-foreground">Recent Members</h3>
                         </div>
                         <Link href="/members" className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
@@ -176,7 +192,7 @@ export default function Home() {
                 <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <Calendar size={18} className="text-emerald-500"/>
+                            <Calendar size={18} className="text-emerald-500" />
                             <h3 className="font-semibold text-foreground">Upcoming Events</h3>
                         </div>
                         <Link href="/events" className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
@@ -211,7 +227,7 @@ export default function Home() {
                 <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <FileText size={18} className="text-amber-500"/>
+                            <FileText size={18} className="text-amber-500" />
                             <h3 className="font-semibold text-foreground">Recent Notices</h3>
                         </div>
                         <Link href="/notices" className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
@@ -226,10 +242,10 @@ export default function Home() {
                                 {noticesData?.notices?.slice(0, 5).map((notice: any, idx: number) => {
                                     const noticeId = notice.id || notice._id || idx.toString();
                                     const isExpanded = expandedNoticeId === noticeId;
-                                    
+
                                     return (
-                                        <div 
-                                            key={noticeId} 
+                                        <div
+                                            key={noticeId}
                                             className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group"
                                             onClick={() => setExpandedNoticeId(isExpanded ? null : noticeId)}
                                         >
@@ -244,7 +260,7 @@ export default function Home() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             </div>
-                                            <div 
+                                            <div
                                                 className={`relative text-xs text-muted-foreground overflow-hidden transition-all duration-300 [&_.ql-editor]:p-0 [&_.ql-editor]:text-xs [&_.ql-editor]:text-muted-foreground ${isExpanded ? 'max-h-[1000px]' : 'max-h-[2.8em] pointer-events-none'}`}
                                                 onClick={(e) => { if (isExpanded) e.stopPropagation(); }}
                                             >
@@ -274,7 +290,7 @@ export default function Home() {
                 <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <Gift size={18} className="text-indigo-500"/>
+                            <Gift size={18} className="text-indigo-500" />
                             <h3 className="font-semibold text-foreground">Scholarships</h3>
                         </div>
                         <Link href="/scholarship" className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
@@ -305,6 +321,6 @@ export default function Home() {
                 </div>
 
             </div>
-		</div>
-	);
+        </div>
+    );
 }
