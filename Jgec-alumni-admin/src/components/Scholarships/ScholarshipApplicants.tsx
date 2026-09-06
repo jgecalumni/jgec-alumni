@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Eye, ChevronLeft, Trash2, Download, Loader2, RefreshCw, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import Loading from "@/app/loading";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useGetScholarshipApplicationsQuery, useLazyGetScholarshipApplicationsQuery, useDeleteScholarshipApplicationMutation } from "@/store/feature/scholarship-feature";
 import { ModalApplicantDetails } from "../Modals/ModalApplicantDetails";
 import { Button } from "../ui/button";
@@ -16,22 +16,37 @@ interface ScholarshipApplicantsProps {
 
 const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }) => {
 	const router = useRouter();
-	const [page, setPage] = useState<number>(1);
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+
+	const initialPage = Number(searchParams.get("page")) || 1;
+	const initialSearch = searchParams.get("search") || "";
+
+	const [page, setPage] = useState<number>(initialPage);
 	const [totalPages, setTotalPages] = useState<number>(1);
 	const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
 	const [isExporting, setIsExporting] = useState(false);
 	const [deletingId, setDeletingId] = useState<string | null>(null);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+	const [searchTerm, setSearchTerm] = useState(initialSearch);
+	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearch);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			setDebouncedSearchTerm(searchTerm);
-			setPage(1); // Reset page on new search
+			if (debouncedSearchTerm !== searchTerm) {
+				setDebouncedSearchTerm(searchTerm);
+				setPage(1); // Reset page on new search
+				const params = new URLSearchParams(searchParams.toString());
+				if (searchTerm) {
+					params.set("search", searchTerm);
+				} else {
+					params.delete("search");
+				}
+				params.set("page", "1");
+				router.replace(`${pathname}?${params.toString()}`);
+			}
 		}, 500);
 		return () => clearTimeout(timer);
-	}, [searchTerm]);
-
+	}, [searchTerm, debouncedSearchTerm, pathname, router, searchParams]);
 	const { data, error, isLoading, isError, refetch } = useGetScholarshipApplicationsQuery({
 		id,
 		page,
@@ -146,7 +161,7 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }) => 
 					<Button
 						variant="outline"
 						size="icon"
-						onClick={() => router.push("/scholarship")}
+						onClick={() => router.back()}
 						className="h-10 w-10 rounded-full border-border/50 bg-card hover:bg-muted shadow-sm transition-all hover:-translate-x-1"
 					>
 						<ChevronLeft size={20} className="text-foreground" />
@@ -278,14 +293,28 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }) => 
 					</div>
 					<div className="flex items-center gap-2">
 						<button
-							onClick={() => {setPage(page - 1),window.scrollTo(0, 0)}}
+							onClick={() => {
+								const newPage = page - 1;
+								setPage(newPage);
+								const params = new URLSearchParams(searchParams.toString());
+								params.set("page", newPage.toString());
+								router.replace(`${pathname}?${params.toString()}`);
+								window.scrollTo(0, 0);
+							}}
 							disabled={page === 1}
 							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
 							<ArrowLeft size={16} />
 							Prev
 						</button>
 						<button
-							onClick={() => {setPage(page + 1),window.scrollTo(0, 0)}}
+							onClick={() => {
+								const newPage = page + 1;
+								setPage(newPage);
+								const params = new URLSearchParams(searchParams.toString());
+								params.set("page", newPage.toString());
+								router.replace(`${pathname}?${params.toString()}`);
+								window.scrollTo(0, 0);
+							}}
 							disabled={page === totalPages}
 							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
 							Next

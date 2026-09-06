@@ -12,7 +12,7 @@ import {
 import toast from "react-hot-toast";
 import { debounce } from "@/utils";
 import Loading from "@/app/loading";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ModalScholarshipDetails } from "../Modals/ModalDetails";
 const ModalScholarshipEdit = dynamic(
 	() => import("../Modals/ModalScholarshipEdit"),
@@ -25,13 +25,19 @@ const ModalGlobalSettings = dynamic(
 
 const Scholarships: React.FC = () => {
 	const router = useRouter();
-	const [searchQuery, setSearchQuery] = useState<string>("");
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+	
+	const initialPage = Number(searchParams.get("page")) || 1;
+	const initialSearch = searchParams.get("search") || "";
+
+	const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
 	const [openModal, setOpenModal] = useState(false);
 	const [openSettingsModal, setOpenSettingsModal] = useState(false);
 	const [openScholarshipModal, setOpenScholarshipModal] = useState(false);
 	const [editScholarship, setEditScholarship] = useState<any>();
 	const [scholarshipDetails, setScholarshipDetails] = useState<any>();
-	const [page, setPage] = useState<number>(1);
+	const [page, setPage] = useState<number>(initialPage);
 	const [totalPages, setTotalPages] = useState<number>(1);
 	const { data, error, isLoading, isError, refetch } = useAllScholarshipsQuery({
 		page: page,
@@ -66,6 +72,16 @@ const Scholarships: React.FC = () => {
 	const handleSearch = debounce(async (e: any) => {
 		const searchValue = e.target.value;
 		setSearchQuery(searchValue);
+		setPage(1);
+		
+		const params = new URLSearchParams(searchParams.toString());
+		if (searchValue) {
+			params.set("search", searchValue);
+		} else {
+			params.delete("search");
+		}
+		params.set("page", "1");
+		router.replace(`${pathname}?${params.toString()}`);
 	}, 1000);
 
 	const handleDelete = async (id: string) => {
@@ -129,6 +145,7 @@ const Scholarships: React.FC = () => {
 						<input
 							type="text"
 							id="table-search"
+							defaultValue={searchQuery}
 							onChange={handleSearch}
 							className="block w-full py-2.5 pl-10 pr-4 text-sm text-foreground bg-background border border-border rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-sm outline-none"
 							placeholder="Search for scholarships..."
@@ -260,14 +277,28 @@ const Scholarships: React.FC = () => {
 					</div>
 					<div className="flex items-center gap-2">
 						<button
-							onClick={() => {setPage(page - 1),window.scrollTo(0, 0)}}
+							onClick={() => {
+								const newPage = page - 1;
+								setPage(newPage);
+								const params = new URLSearchParams(searchParams.toString());
+								params.set("page", newPage.toString());
+								router.replace(`${pathname}?${params.toString()}`);
+								window.scrollTo(0, 0);
+							}}
 							disabled={page === 1}
 							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
 							<ArrowLeft size={16} />
 							Prev
 						</button>
 						<button
-							onClick={() => {setPage(page + 1),window.scrollTo(0, 0)}}
+							onClick={() => {
+								const newPage = page + 1;
+								setPage(newPage);
+								const params = new URLSearchParams(searchParams.toString());
+								params.set("page", newPage.toString());
+								router.replace(`${pathname}?${params.toString()}`);
+								window.scrollTo(0, 0);
+							}}
 							disabled={page === totalPages}
 							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
 							Next
