@@ -6,7 +6,8 @@ interface IResponse {
         scholarships: number,
         notices: number,
         gallery: number,
-        events: number
+        events: number,
+        scholarshipApplications?: number
     },
     message: string,
     success: boolean,
