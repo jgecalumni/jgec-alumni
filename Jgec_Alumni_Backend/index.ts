@@ -299,4 +299,7 @@ app.use("/v1/api/contributions", ContributionRoute);
 app.use("/v1/api/media_press", Media_pressRoute);
 app.use("/v1/api/settings", SettingsRoute);
 
-app.listen(port, () => console.log("🚀[Server]: listening on port " + port));
+const server = app.listen(port, () => console.log("🚀[Server]: listening on port " + port));
+server.timeout = 600000; 
+server.keepAliveTimeout = 610000;
+server.headersTimeout = 620000;
