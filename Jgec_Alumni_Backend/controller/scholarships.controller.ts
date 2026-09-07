@@ -11,7 +11,13 @@ export const getAllScholarshipsAdmin = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { limit, page, search } = req.query;
 
-		const count = await prisma.scholarships.count();
+		const count = await prisma.scholarships.count({
+			where: {
+				name: {
+					contains: (search as string) || "",
+				},
+			},
+		});
 		const scholarships = await prisma.scholarships.findMany({
 			take: Number(limit) || 10,
 			skip: (Number(page) - 1) * Number(limit) || 0,
@@ -92,7 +98,13 @@ export const getAllScholarships = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { search, limit, page } = req.query;
 
-		const count = await prisma.scholarships.count();
+		const count = await prisma.scholarships.count({
+			where: {
+				name: {
+					contains: (search as string) || "",
+				},
+			},
+		});
 		const scholarships = await prisma.scholarships.findMany({
 			// search name if search keyword exist
 			where: {
@@ -530,7 +542,16 @@ export const getAllScholarshipApplications = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { limit, page, search, scholarshipId } = req.query;
 
-		const totalCount = await prisma.scholarshipApplication.count();
+		const totalCount = await prisma.scholarshipApplication.count({
+			where: {
+				scholarshipId: {
+					equals: parseInt(scholarshipId as string) || 0,
+				},
+				name: {
+					contains: (search as string) || "",
+				},
+			},
+		});
 		const allApplications = await prisma.scholarshipApplication.findMany({
 			take: Number(limit) || 10,
 			skip: (Number(page) - 1) * Number(limit) || 0,
@@ -588,7 +609,7 @@ export const getAllScholarshipApplications = asyncHandler(
 			data: allApplications,
 			error: false,
 			success: true,
-			totalCount: allApplications.length,
+			totalCount: totalCount,
 			totalPages: Math.ceil(totalCount / (Number(limit) || 10)),
 			page: Number(page) || 1,
 			limit: Number(limit) || 10,
@@ -737,7 +758,7 @@ export const applyForScholarship = asyncHandler(
 		}
 
 		const globalSettings = await prisma.globalSettings.findFirst();
-		
+
 		const currentDate = new Date();
 		const startDate = targetScholarship.startDate || globalSettings?.scholarshipStartDate;
 		const endDate = targetScholarship.endDate || globalSettings?.scholarshipEndDate;

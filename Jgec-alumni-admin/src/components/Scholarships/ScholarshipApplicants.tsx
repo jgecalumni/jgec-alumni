@@ -14,7 +14,7 @@ interface ScholarshipApplicantsProps {
 	id: string;
 }
 
-const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }) => {
+const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }: { id: string }) => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -146,6 +146,8 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }) => 
 			setTotalPages(data?.totalPages || 1);
 		}
 	}, [isError, error, data]);
+	console.log("DATA:",data);
+	
 
 	if (isLoading) {
 		return <Loading />;
