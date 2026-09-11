@@ -53,6 +53,11 @@ export const ScholarshipSchema = Yup.object().shape({
 		.test(
 			"fileType",
 			"Only PDF format is supported",
-			(value: any) => value && value.type === "application/pdf"
+			(value: any) => {
+				if (!value) return false;
+				const isPdfType = value.type === "application/pdf";
+				const isPdfExt = value.name ? value.name.toLowerCase().endsWith(".pdf") : false;
+				return isPdfType || isPdfExt;
+			}
 		),
 });
