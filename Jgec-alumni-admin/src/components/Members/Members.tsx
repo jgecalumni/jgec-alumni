@@ -3,7 +3,7 @@
 import Loading from "@/app/loading";
 import { useGetAllMembersQuery } from "@/store/feature/member-feature";
 import { debounce } from "@/utils";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, LayoutGrid, List, Eye } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -12,6 +12,14 @@ import { ModalMemberDetails } from "../Modals/ModalDetails";
 
 const Members = () => {
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+	
+	useEffect(() => {
+		if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+			setViewMode("table");
+		}
+	}, []);
+
 	const [openModal,setOpenModal] = useState<boolean>(false)
     const [editMembers, setEditMembers] = useState<any>("");
 	const [page, setPage] = useState<number>(1);
@@ -51,13 +59,13 @@ const Members = () => {
 			</div>
 
 			<div className="bg-card border border-border rounded-xl shadow-sm">
-				<div className="p-6 pb-4 flex flex-col sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between">
+				<div className="p-4 sm:p-6 flex flex-col md:flex-row flex-wrap space-y-4 md:space-y-0 items-start md:items-center justify-between">
 					<label
 						htmlFor="table-search"
 						className="sr-only">
 						Search
 					</label>
-					<div className="relative">
+					<div className="relative flex-1 w-full mr-0 md:mr-4">
 						<div className="absolute inset-y-0 left-0 flex items-center ps-3 pointer-events-none">
 							<svg
 								className="w-5 h-5 text-muted-foreground"
@@ -75,12 +83,31 @@ const Members = () => {
 							type="text"
 							id="table-search"
 							onChange={handleSearch}
-							className="block p-2 ps-10 text-sm text-foreground bg-background border border-border rounded-lg w-80 focus:ring-2 focus:ring-ring focus:border-input transition-all"
+							className="block p-2.5 ps-10 text-sm text-foreground bg-background border border-border rounded-xl w-full focus:ring-2 focus:ring-ring focus:border-input transition-all"
 							placeholder="Search for members"
 						/>
 					</div>
+					
+					<div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 w-full md:w-auto mt-2 md:mt-0">
+						<div className="flex items-center bg-muted/40 rounded-lg p-1 border border-border/50">
+							<button
+								onClick={() => setViewMode("table")}
+								className={`p-1.5 rounded-md transition-all ${viewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+								title="Table View">
+								<List size={16} />
+							</button>
+							<button
+								onClick={() => setViewMode("grid")}
+								className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+								title="Grid View">
+								<LayoutGrid size={16} />
+							</button>
+						</div>
+					</div>
 				</div>
 				
+				{/* Table View */}
+				{viewMode === "table" && (
 				<div className="overflow-x-auto no-scrollbar">
 					<table className="w-full text-sm text-left text-muted-foreground">
 						<thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-y border-border">
@@ -151,12 +178,19 @@ const Members = () => {
 											</div>
 										</td>
 										<td className="px-6 py-4">
-											<button
-												className="font-medium text-primary hover:underline"
-												onClick={() => setEditMembers(item)}
-											>
-												View Details
-											</button>
+											<div className="flex items-center justify-start gap-2">
+												<button
+													title="View Full Details"
+													className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 rounded-lg transition-all"
+													onClick={(e) => {
+														e.stopPropagation();
+														setEditMembers(item);
+													}}
+												>
+													<Eye size={16} />
+													<span>View</span>
+												</button>
+											</div>
 										</td>
 									</tr>
 								))
@@ -172,8 +206,70 @@ const Members = () => {
 						</tbody>
 					</table>
 				</div>
+				)}
 				
-				<div className={`flex items-center justify-between p-6 border-t border-border ${data?.members?.length > 0 ? "block" : "hidden"}`}>
+				{/* Card View */}
+				{viewMode === "grid" && (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/5">
+					{data?.members?.length > 0 ? (
+						data.members.map((item: any) => (
+							<div
+								key={item.id}
+								onClick={() => setEditMembers(item)}
+								className="flex flex-col gap-3 p-5 rounded-2xl border bg-background border-border/50 cursor-pointer hover:border-indigo-500/30 hover:shadow-md transition-all duration-200 shadow-sm"
+							>
+								<div className="flex items-start gap-4 border-b border-border/30 pb-3">
+									<div className="relative h-14 w-14 rounded-full overflow-hidden border border-border shrink-0">
+										<Image
+											src={item.photo}
+											alt={item.name}
+											fill
+											className="object-cover"
+										/>
+									</div>
+									<div className="flex flex-col flex-1 min-w-0">
+										<h3 className="font-semibold text-base text-foreground truncate">{item.name}</h3>
+										<p className="text-sm text-muted-foreground truncate">{item.email}</p>
+									</div>
+								</div>
+								
+								<div className="grid grid-cols-2 gap-3 text-sm mt-1">
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Department</span>
+										<span className="font-medium text-foreground truncate">{item.department}</span>
+									</div>
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Passing Year</span>
+										<span className="font-medium text-foreground">{item.passingYear}</span>
+									</div>
+									<div className="flex flex-col col-span-2">
+										<span className="text-xs text-muted-foreground">Student ID</span>
+										<span className="font-medium text-foreground truncate">{item.studentId}</span>
+									</div>
+								</div>
+
+								<div className="flex items-center justify-end mt-2 pt-3 border-t border-border/30">
+									<button
+										className="px-4 py-2 text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 rounded-lg transition-all flex-1 flex justify-center items-center gap-2 text-sm font-medium"
+										onClick={(e) => {
+											e.stopPropagation();
+											setEditMembers(item);
+										}}>
+										<Eye size={16} />
+										<span>View Details</span>
+									</button>
+								</div>
+							</div>
+						))
+					) : (
+						<div className="col-span-full py-12 text-center text-muted-foreground bg-transparent">
+							No members found.
+						</div>
+					)}
+				</div>
+				)}
+				
+				<div className={`flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 border-t border-border bg-muted/10 ${data?.members?.length > 0 ? "flex" : "hidden"}`}>
 					<div className="text-sm text-muted-foreground">
 						Showing Page <span className="font-medium text-foreground">{page}</span> of <span className="font-medium text-foreground">{totalPages}</span>
 					</div>

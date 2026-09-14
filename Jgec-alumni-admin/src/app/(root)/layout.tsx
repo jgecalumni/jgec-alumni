@@ -14,6 +14,7 @@ import {
 	SidebarMenuItem,
 	SidebarProvider,
 	SidebarTrigger,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import {
 	DropdownMenu,
@@ -26,8 +27,25 @@ import { useLogoutMutation } from "@/store/baseApi";
 import React, { useEffect, useRef, useState } from "react";
 import { clearAuthCookies } from "@/app/actions";
 import toast from "react-hot-toast";
-import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Newspaper, LayoutDashboard, BellRing, GraduationCap, CalendarDays, Images, Users, Receipt, CreditCard, Folder, LogOut } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Newspaper, LayoutDashboard, BellRing, GraduationCap, CalendarDays, Images, Users, Receipt, CreditCard, Folder, LogOut, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+function MobileSidebarCloseButton() {
+	const { setOpenMobile, isMobile } = useSidebar();
+	if (!isMobile) return null;
+	return (
+		<button
+			onClick={(e) => {
+				e.preventDefault();
+				setOpenMobile(false);
+			}}
+			className="md:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors hover:bg-white/50 dark:hover:bg-white/10 rounded-xl"
+			aria-label="Close Sidebar"
+		>
+			<X size={20} />
+		</button>
+	);
+}
 
 export default function Layout({
 	children,
@@ -109,28 +127,31 @@ export default function Layout({
 
 	return (
 		<SidebarProvider>
-			{/* Mobile Sidebar (Hidden on large screens) */}
-			<div className="lg:hidden">
+			{/* Mobile Sidebar (Hidden on medium/large screens) */}
+			<div className="md:hidden">
 				<Sidebar collapsible="icon" className="border-r border-white/20 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-2xl shadow-[8px_0_30px_-15px_rgba(0,0,0,0.1)]">
 					<SidebarContent>
 						<SidebarGroup className="group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:group-hover:p-2 transition-all duration-300">
 							<SidebarGroupLabel className="my-6 h-auto py-2 group-data-[collapsible=icon]:!mt-6 group-data-[collapsible=icon]:!opacity-100 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:group-hover:px-2 transition-all duration-300">
-								<div className="flex gap-4 items-center group cursor-pointer w-full overflow-hidden whitespace-nowrap">
-									<div className="relative overflow-hidden rounded-2xl shadow-lg ring-1 ring-white/30 dark:ring-white/10 transition-all duration-500 shrink-0 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:group-hover:w-12 group-data-[collapsible=icon]:group-hover:h-12 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-md">
-										<Image
-											src="/assets/Logo.webp"
-											height={60}
-											width={60}
-											alt="Jgec Alumni Logo"
-											className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 drop-shadow-md"
-										/>
+								<div className="flex items-center justify-between group w-full overflow-hidden whitespace-nowrap">
+									<div className="flex gap-4 items-center cursor-pointer">
+										<div className="relative overflow-hidden rounded-2xl shadow-lg ring-1 ring-white/30 dark:ring-white/10 transition-all duration-500 shrink-0 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:group-hover:w-12 group-data-[collapsible=icon]:group-hover:h-12 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-md">
+											<Image
+												src="/assets/Logo.webp"
+												height={60}
+												width={60}
+												alt="Jgec Alumni Logo"
+												className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 drop-shadow-md"
+											/>
+										</div>
+										<div className="flex flex-col truncate group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 transition-opacity duration-300">
+											<span className="text-xl font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent truncate drop-shadow-sm">
+												JGEC Alumni
+											</span>
+											<span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Admin Portal</span>
+										</div>
 									</div>
-									<div className="flex flex-col truncate group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 transition-opacity duration-300">
-										<span className="text-xl font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent truncate drop-shadow-sm">
-											JGEC Alumni
-										</span>
-										<span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Admin Portal</span>
-									</div>
+									<MobileSidebarCloseButton />
 								</div>
 							</SidebarGroupLabel>
 							<SidebarGroupContent className="px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:group-hover:px-3 transition-all duration-300">
@@ -206,8 +227,8 @@ export default function Layout({
 				<div className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] opacity-60 translate-x-1/3 -translate-y-1/4 pointer-events-none" />
 				<div className="absolute bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] opacity-60 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
-				{/* Mobile Header (Hidden on large screens) */}
-				<div className="p-4 pb-0 sticky top-0 z-30 lg:hidden">
+				{/* Mobile Header (Hidden on medium/large screens) */}
+				<div className="p-4 pb-0 sticky top-0 z-30 md:hidden">
 					<header className="flex h-16 w-full items-center justify-between rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-black/40 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-300">
 						<div className="flex items-center gap-4">
 							<SidebarTrigger className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors hover:bg-white/50 dark:hover:bg-white/10 p-2 rounded-xl" />
@@ -230,7 +251,7 @@ export default function Layout({
 				</div>
 
 				{/* Desktop Top Navbar (Hidden on small screens) */}
-				<div className="hidden lg:block sticky top-0 z-40 w-full border-b border-white/20 dark:border-white/10 bg-white/70 dark:bg-black/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl">
+				<div className="hidden md:block sticky top-0 z-40 w-full border-b border-white/20 dark:border-white/10 bg-white/70 dark:bg-black/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl">
 					<div className="flex h-16 items-center px-6">
 						<div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-800 shrink-0">
 							<div className="flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/40 dark:border-white/10">
@@ -354,7 +375,7 @@ export default function Layout({
 				</div>
 
 				{/* Main Content Area */}
-				<main className="flex-1 p-4 lg:p-6 flex flex-col z-10 w-full">
+				<main className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col z-10 w-full">
 					<div className="mx-auto w-full max-w-7xl flex-1 animate-in fade-in slide-in-from-bottom-8 duration-700">
 						{children}
 					</div>

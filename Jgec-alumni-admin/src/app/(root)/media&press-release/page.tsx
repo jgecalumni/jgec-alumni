@@ -151,9 +151,13 @@ export default function MediaPressAdmin() {
               className="bg-background border border-border rounded-lg py-2 pl-9 pr-4 text-sm w-64 outline-none focus:ring-2 focus:ring-ring focus:border-input text-foreground transition-all"
             />
           </div>
-          <Button onClick={handleOpenCreate} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 shadow-sm transition-all">
-            <Plus size={16} className="mr-2" /> Create
-          </Button>
+          <button 
+            onClick={handleOpenCreate} 
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white cursor-pointer flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 duration-300"
+          >
+            <Plus size={18} /> 
+            <span>Create Article</span>
+          </button>
         </div>
       </div>
 
@@ -284,11 +288,11 @@ export default function MediaPressAdmin() {
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold text-foreground">Excerpt</Label>
                     <Textarea 
-                      rows={4} 
+                      rows={6}
                       value={formData.excerpt} 
                       onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                       placeholder="Write a catchy summary..." 
-                      className="bg-background border-border focus:ring-2 focus:ring-ring focus:border-input text-sm resize-none transition-all" 
+                      className="bg-background border-border focus:ring-2 focus:ring-ring focus:border-input text-sm resize-y transition-all" 
                     />
                   </div>
                 </div>

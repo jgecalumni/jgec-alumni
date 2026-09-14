@@ -18,6 +18,9 @@ import {
 	ArrowRight,
 	Loader,
 	Download,
+	LayoutGrid,
+	List,
+	Eye,
 } from "lucide-react";
 import {
 	useAddContributionsMutation,
@@ -60,8 +63,15 @@ const Payments: React.FC = () => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedYear, setSelectedYear] = useState<string>("all");
+	const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
 	const [page, setPage] = useState<number>(1);
 	const [totalPages, setTotalPages] = useState<number>(1);
+
+	useEffect(() => {
+		if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+			setViewMode("table");
+		}
+	}, []);
 
 	const {
 		data,
@@ -369,9 +379,9 @@ const Payments: React.FC = () => {
 			{/* Table Section */}
 			<div className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl shadow-xl overflow-hidden mb-8">
 				{/* Search Bar */}
-				<div className="p-6 flex flex-col sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between border-b border-border/50 bg-muted/10">
-					<div className="flex flex-wrap items-center gap-4 flex-1">
-						<div className="relative flex-1 max-w-md group">
+				<div className="p-4 sm:p-6 flex flex-col md:flex-row flex-wrap space-y-4 md:space-y-0 items-start md:items-center justify-between border-b border-border/50 bg-muted/10">
+					<div className="flex flex-wrap items-center gap-4 flex-1 w-full md:w-auto">
+						<div className="relative flex-1 w-full group">
 							<svg
 								className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground group-focus-within:text-indigo-500 transition-colors"
 								width="18"
@@ -445,12 +455,29 @@ const Payments: React.FC = () => {
 						</DropdownMenu>
 					</div>
 
-					<div className="text-sm text-muted-foreground font-medium whitespace-nowrap px-4 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-inner">
-						Showing <span className="text-foreground font-bold">{contris.length}</span> of <span className="text-foreground font-bold">{stats.totalContributions}</span>
+					<div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 w-full md:w-auto mt-2 md:mt-0">
+						<div className="flex items-center bg-muted/40 rounded-lg p-1 border border-border/50 mr-0 md:mr-2">
+							<button
+								onClick={() => setViewMode("table")}
+								className={`p-1.5 rounded-md transition-all ${viewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+								title="Table View">
+								<List size={16} />
+							</button>
+							<button
+								onClick={() => setViewMode("grid")}
+								className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+								title="Grid View">
+								<LayoutGrid size={16} />
+							</button>
+						</div>
+						<div className="text-sm text-muted-foreground font-medium whitespace-nowrap px-4 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-inner">
+							Showing <span className="text-foreground font-bold">{contris.length}</span> of <span className="text-foreground font-bold">{stats.totalContributions}</span>
+						</div>
 					</div>
 				</div>
 
-				{/* Table */}
+				{/* Table View */}
+				{viewMode === "table" && (
 				<div className="overflow-x-auto no-scrollbar">
 					<table className="w-full text-sm text-left text-muted-foreground">
 						<thead className="text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border/50 backdrop-blur-md sticky top-0">
@@ -461,7 +488,7 @@ const Payments: React.FC = () => {
 								<th className="px-6 py-4 font-bold tracking-wider">Amount (INR)</th>
 								<th className="px-6 py-4 font-bold tracking-wider">Deposited On</th>
 								<th className="px-6 py-4 font-bold tracking-wider">Mobile No.</th>
-								<th className="px-6 py-4 font-bold tracking-wider">Receipt</th>
+								<th className="px-6 py-4 font-bold tracking-wider">Actions</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-border/50">
@@ -491,14 +518,29 @@ const Payments: React.FC = () => {
 										</td>
 										<td className="px-6 py-4">{row.mobileNo}</td>
 										<td className="px-6 py-4">
-											<Link
-												href={row.pdfLink || "#"}
-												onClick={(e) => e.stopPropagation()}
-												target="_blank">
-												<Button size="sm" className="h-8 px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 rounded-lg">
-													View
-												</Button>
-											</Link>
+											<div className="flex items-center gap-2">
+												<button
+													title="View Full Details"
+													className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 rounded-lg transition-all"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleRowClick(row);
+													}}
+												>
+													<Eye size={16} />
+													<span>View</span>
+												</button>
+												<Link
+													href={row.pdfLink || "#"}
+													onClick={(e) => e.stopPropagation()}
+													target="_blank"
+													title="Download Receipt"
+													className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 rounded-lg transition-all"
+												>
+													<Download size={16} />
+													<span>Receipt</span>
+												</Link>
+											</div>
 										</td>
 									</tr>
 								))
@@ -531,8 +573,82 @@ const Payments: React.FC = () => {
 						</tbody>
 					</table>
 				</div>
+				)}
+
+				{/* Card View */}
+				{viewMode === "grid" && (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/5">
+					{contris.length > 0 ? (
+						contris.map((row: any, index: number) => (
+							<div
+								key={index}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleRowClick(row);
+								}}
+								className="flex flex-col gap-3 p-5 rounded-2xl border bg-background border-border/50 cursor-pointer hover:border-indigo-500/30 hover:shadow-md transition-all duration-200 shadow-sm"
+							>
+								<div className="flex items-start justify-between gap-3 border-b border-border/30 pb-3">
+									<div className="flex flex-col min-w-0">
+										<h3 className="font-semibold text-base text-foreground truncate">{row.nameOfAluminus}</h3>
+										<p className="text-sm text-muted-foreground mt-0.5 truncate">{row.email || "No Email"}</p>
+									</div>
+									<div className="shrink-0 bg-muted/40 px-2.5 py-1 rounded-lg border border-border/50 text-xs font-medium text-foreground">
+										Sl: {row.slNo}
+									</div>
+								</div>
+								
+								<div className="grid grid-cols-2 gap-3 text-sm">
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Amount</span>
+										<span className="font-bold text-emerald-600 dark:text-emerald-400 truncate">₹ {parseFloat(row.amount || 0).toLocaleString("en-IN")}</span>
+									</div>
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Class of</span>
+										<span className="font-medium text-foreground truncate">{row.graduationYear}</span>
+									</div>
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Date</span>
+										<span className="font-medium text-foreground truncate">{row.depositedOn}</span>
+									</div>
+									<div className="flex flex-col">
+										<span className="text-xs text-muted-foreground">Mobile</span>
+										<span className="font-medium text-foreground truncate">{row.mobileNo}</span>
+									</div>
+								</div>
+
+								<div className="flex items-center justify-end gap-2 mt-2 pt-3 border-t border-border/30">
+									<button
+										className="px-4 py-2 text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 rounded-lg transition-all flex-1 flex justify-center items-center gap-2 text-sm font-medium"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleRowClick(row);
+										}}>
+										<Eye size={16} />
+										<span>View</span>
+									</button>
+									<Link
+										href={row.pdfLink || "#"}
+										onClick={(e) => e.stopPropagation()}
+										target="_blank"
+										className="px-4 py-2 text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 rounded-lg transition-all flex-1 flex justify-center items-center gap-2 text-sm font-medium"
+									>
+										<Download size={16} />
+										<span>Receipt</span>
+									</Link>
+								</div>
+							</div>
+						))
+					) : (
+						<div className="col-span-full py-12 text-center text-muted-foreground bg-transparent">
+							No contributions found.
+						</div>
+					)}
+				</div>
+				)}
+				
 				<div
-					className={`flex items-center justify-between p-6 border-t border-border/50 bg-muted/10 ${contris.length > 0 ? "block" : "hidden"
+					className={`flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 border-t border-border/50 bg-muted/10 ${contris.length > 0 ? "flex" : "hidden"
 						} `}>
 					<div className="text-sm text-muted-foreground">
 						Showing Page <span className="font-bold text-foreground">{page}</span> of <span className="font-bold text-foreground">{totalPages}</span>
