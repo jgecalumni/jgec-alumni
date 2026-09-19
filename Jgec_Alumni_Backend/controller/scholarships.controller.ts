@@ -794,14 +794,7 @@ export const applyForScholarship = asyncHandler(
 		});
 
 		if (parseInt(scholarshipId) === 47 || parseInt(scholarshipId) === 48) {
-			if (applicantCount >= 4) {
-				res.status(400).json({
-					success: false,
-					message: "Maximum limit of 4 applications reached.",
-					error: true,
-				});
-				return;
-			}
+			// No application limit for these scholarships
 		}
 		else {
 			if (applicantCount >= 3) {
