@@ -792,13 +792,26 @@ export const applyForScholarship = asyncHandler(
 		const applicantCount = await prisma.scholarshipApplication.count({
 			where: { studentId: String(studentId) },
 		});
-		if (applicantCount >= 3) {
-			res.status(400).json({
-				success: false,
-				message: "You can only apply for up to 3 scholarships",
-				error: true,
-			});
-			return;
+
+		if (parseInt(scholarshipId) === 47 || parseInt(scholarshipId) === 48) {
+			if (applicantCount >= 4) {
+				res.status(400).json({
+					success: false,
+					message: "Maximum limit of 4 applications reached.",
+					error: true,
+				});
+				return;
+			}
+		}
+		else {
+			if (applicantCount >= 3) {
+				res.status(400).json({
+					success: false,
+					message: "Maximum limit of 3 applications reached.",
+					error: true,
+				});
+				return;
+			}
 		}
 
 		if (isExist) {
