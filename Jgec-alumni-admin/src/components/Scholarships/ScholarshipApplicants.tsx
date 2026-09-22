@@ -181,7 +181,9 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }: { i
 					extraCurricular: (applicant.extraCurricularActivities || "").toString().replace(/[\r\n]+/g, ", "),
 					achievement: (applicant.specialAchievement || "").toString().replace(/[\r\n]+/g, ", "),
 					jobCampusing: applicant.jobCampusing,
-					documentUrl: getDocumentUrl(applicant.document),
+					documentUrl: getDocumentUrl(applicant.document) !== "N/A" 
+						? { text: getDocumentUrl(applicant.document), hyperlink: getDocumentUrl(applicant.document) }
+						: "N/A",
 				});
 
 				const isEven = index % 2 === 0;
@@ -213,13 +215,10 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }: { i
 					// Columns like Sl No(1), DOB(6), Intake(9), Passing(10), Semesters(18-23)
 					const centerCols = [1, 4, 5, 6, 8, 9, 10, 13, 14, 17, 18, 19, 20, 21, 22, 23, 26];
 
-					// Do not wrap text for Extracurricular (24), Special Achievement (25), and URL (27)
-					const noWrapCols = [24, 25, 27];
-
 					cell.alignment = {
 						vertical: "top", // Align top so long addresses don't push other fields down weirdly
 						horizontal: centerCols.includes(colNumber) ? "center" : "left",
-						wrapText: !noWrapCols.includes(colNumber)
+						wrapText: true
 					};
 				});
 			});
