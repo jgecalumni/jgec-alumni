@@ -552,6 +552,14 @@ export const getAllScholarshipApplications = asyncHandler(
 				},
 			},
 		});
+		const ScholarshipName = await prisma.scholarships.findUnique({
+			where: {
+				id: parseInt(scholarshipId as string) || 0,
+			},
+			select: {
+				name: true,
+			},
+		});
 		const allApplications = await prisma.scholarshipApplication.findMany({
 			take: Number(limit) || 10,
 			skip: (Number(page) - 1) * Number(limit) || 0,
@@ -613,6 +621,7 @@ export const getAllScholarshipApplications = asyncHandler(
 			totalPages: Math.ceil(totalCount / (Number(limit) || 10)),
 			page: Number(page) || 1,
 			limit: Number(limit) || 10,
+			ScholarshipName: ScholarshipName?.name,
 		});
 	}
 );
