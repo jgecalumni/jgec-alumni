@@ -216,14 +216,13 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }: { i
 					const centerCols = [1, 4, 5, 6, 8, 9, 10, 13, 14, 17, 18, 19, 20, 21, 22, 23, 26];
 
 					cell.alignment = {
-						vertical: "top", // Align top so long addresses don't push other fields down weirdly
+						vertical: "top", 
 						horizontal: centerCols.includes(colNumber) ? "center" : "left",
 						wrapText: true
 					};
 				});
 			});
 
-			// Optional: Auto-freeze the top header row so it stays visible while scrolling
 			worksheet.views = [
 				{ state: 'frozen', ySplit: 1, showGridLines: false }
 			];
@@ -317,7 +316,7 @@ const ScholarshipApplicants: React.FC<ScholarshipApplicantsProps> = ({ id }: { i
 				<div className="p-4 sm:p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-border/50 bg-muted/10">
 					<div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full md:w-auto">
 						<div className="text-sm sm:text-lg font-semibold text-foreground flex-1 min-w-[120px]">
-							Total Applicants: {data?.docCount || 0}
+							Total Applicants: {data?.totalCount || 0}
 						</div>
 						<div className="flex items-center bg-muted/40 rounded-lg p-1 border border-border/50">
 							<button
