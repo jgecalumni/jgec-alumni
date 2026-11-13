@@ -114,12 +114,18 @@ export const refreshSession = async (req: Request, res: Response): Promise<void>
 				{ expiresIn: '15m' }
 			);
 
+			const origin = req.headers.origin || req.headers.referer || "";
+			const isJgecDomain =
+				origin.includes("jgecalumni.in") ||
+				process.env.NODE_ENV === "production";
+
 			const cookieOptions: any = {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-				sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+				secure: isJgecDomain,
+				sameSite: isJgecDomain ? "none" : "lax",
 				maxAge: 15 * 60 * 1000,
 				path: "/",
+				...(isJgecDomain ? { domain: ".jgecalumni.in" } : {}),
 			};
 
 			res.cookie('accessToken', newAccessToken, cookieOptions);

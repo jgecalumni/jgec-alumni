@@ -277,11 +277,15 @@ export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
 		await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
 	}
 
-	const isProd = process.env.NODE_ENV === "production";
+	const origin = req.headers.origin || req.headers.referer || "";
+	const isJgecDomain =
+		origin.includes("jgecalumni.in") ||
+		process.env.NODE_ENV === "production";
+
 	const clearOptions: any = {
 		httpOnly: true,
-		secure: isProd,
-		sameSite: isProd ? "none" : "lax",
+		secure: isJgecDomain,
+		sameSite: isJgecDomain ? "none" : "lax",
 		path: "/",
 	};
 
@@ -291,7 +295,7 @@ export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
 	res.clearCookie("tokenMoney", clearOptions);
 	res.clearCookie("user_session", { path: "/" });
 
-	if (isProd) {
+	if (isJgecDomain) {
 		const prodClear = { ...clearOptions, domain: ".jgecalumni.in" };
 		res.clearCookie('refreshToken', prodClear);
 		res.clearCookie('accessToken', prodClear);
@@ -523,12 +527,17 @@ export const login = async (req: any, res: any) => {
 			})
 		]);
 
-		const isProd = process.env.NODE_ENV === "production";
+		const origin = req.headers.origin || req.headers.referer || "";
+		const isJgecDomain =
+			origin.includes("jgecalumni.in") ||
+			process.env.NODE_ENV === "production";
+
 		const cookieOptions: any = {
 			httpOnly: true,
-			secure: isProd,
-			sameSite: isProd ? "none" : "lax",
+			secure: isJgecDomain,
+			sameSite: isJgecDomain ? "none" : "lax",
 			path: "/",
+			...(isJgecDomain ? { domain: ".jgecalumni.in" } : {}),
 		};
 
 		res.cookie('refreshToken', refreshToken, {
@@ -548,10 +557,8 @@ export const login = async (req: any, res: any) => {
 			role: user.role,
 			allowedPaths: user.allowedPaths,
 		}), {
+			...cookieOptions,
 			httpOnly: false,
-			secure: isProd,
-			sameSite: isProd ? "none" : "lax",
-			path: "/",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 

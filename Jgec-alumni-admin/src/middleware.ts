@@ -112,13 +112,18 @@ export function middleware(request: NextRequest) {
 		const response = NextResponse.next();
 
 		if (!request.cookies.has("user_session")) {
+			const isJgec = request.nextUrl.hostname.includes("jgecalumni.in");
 			response.cookies.set(
 				"user_session",
 				JSON.stringify({
 					role: tokenData.role,
 					allowedPaths,
 				}),
-				{ path: "/", httpOnly: false }
+				{
+					path: "/",
+					httpOnly: false,
+					...(isJgec ? { domain: ".jgecalumni.in" } : {}),
+				}
 			);
 		}
 
