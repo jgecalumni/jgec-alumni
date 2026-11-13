@@ -26,6 +26,7 @@ interface IEventType {
 	location: string;
 	hostName: string;
 	hostDetails: string;
+	hostImage: string;
 	schedule: [
 		{
 			startTime: string;
@@ -55,8 +56,8 @@ interface IScholarshipType {
 	subtitle: string;
 	providerName: string;
 	providerImage: string;
-	providerDepartment:string;
-	providerPassingYear:any
+	providerDepartment: string;
+	providerPassingYear: any
 	providerDescription: string;
 	description: string;
 	whoCanApply: string;
