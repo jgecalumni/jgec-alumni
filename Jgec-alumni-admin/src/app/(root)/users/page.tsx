@@ -62,7 +62,7 @@ import {
 } from "@/store/feature/user-feature";
 
 // All available functional routes within the admin console
-export const SYSTEM_PATHS = [
+const SYSTEM_PATHS = [
 	{ path: "/", label: "Dashboard", category: "Core", icon: Globe },
 	{ path: "/members", label: "Alumni Directory", category: "Core", icon: UsersIcon },
 	{ path: "/events", label: "Events & Reunions", category: "Core", icon: Calendar },
