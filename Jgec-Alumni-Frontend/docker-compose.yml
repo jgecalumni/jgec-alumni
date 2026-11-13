@@ -16,5 +16,5 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       # Add any necessary dev env variables here
-      - NEXT_PUBLIC_API_URL=https://localhost:8000/v1/api
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/v1/api
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000

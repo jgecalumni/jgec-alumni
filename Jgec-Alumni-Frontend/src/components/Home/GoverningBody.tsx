@@ -25,9 +25,9 @@ const data = [
 		post: "President",
 		member: [
 			{
-				name: "Mr. Bhaskar Dasgupta",
-				timeline: "(1979-1983)",
-				image: "/assets/Members/BhaskarDasgupta.jpg",
+				name: "Mr. Dilip Kumar Roy,",
+				timeline: "(1980-1984)",
+				image: "/assets/Members/DilipKumarRoy.jpg",
 			},
 		],
 	},
@@ -45,9 +45,9 @@ const data = [
 		post: "Secretary",
 		member: [
 			{
-				name: "Mr. Partha Halder",
-				timeline: "(1989-1993)",
-				image: "/assets/Members/person-icon-8.png",
+				name: "Dr. Mousam Chatterjee",
+				timeline: "(2000-2004)",
+				image: "/assets/Members/MousamChatterjee.jpg",
 			},
 		],
 	},
@@ -55,9 +55,9 @@ const data = [
 		post: "Treasurer",
 		member: [
 			{
-				name: "Dr. Mousam Chatterjee",
-				timeline: "(2000-2004)",
-				image: "/assets/Members/MousamChatterjee.jpg",
+				name: "Mr. Arkaprava Das",
+				timeline: "(2012-2016)",
+				image: "/assets/Members/ArkapravaDas.jpeg",
 			},
 		],
 	},
@@ -75,9 +75,9 @@ const data = [
 		post: "Governing Body Member",
 		member: [
 			{
-				name: "Mr. Tufan Dutta",
-				timeline: "(1996-2000)",
-				image: "/assets/Members/TufanDutta.jpg",
+				name: "Mr. Debasish Chatterjee,",
+				timeline: "(1991-1995)",
+				image: "/assets/Members/DebasishChatterjee.jpeg",
 			},
 		],
 	},
@@ -85,9 +85,19 @@ const data = [
 		post: "Governing Body Member",
 		member: [
 			{
-				name: "Mr. Soumyajit Das",
-				timeline: "(2007-2011)",
-				image: "/assets/Members/SoumyajitDas.jpg",
+				name: "Mr. Gautam Bhaduri",
+				timeline: "(1979-1983)",
+				image: "/assets/Members/GautamBhaduri.jpeg",
+			},
+		],
+	},
+	{
+		post: "Governing Body Member",
+		member: [
+			{
+				name: "Mr. Pinaki Ranjan Sanyal",
+				timeline: "(1983-1987)",
+				image: "/assets/Members/PinakiRanjanSanyal.jpeg",
 			},
 		],
 	},
@@ -280,7 +290,7 @@ const GoverningBody = () => {
 						<div className="bg-blue-900 text-white text-lg md:text-xl px-6 py-4 font-bold tracking-wide border-b-4 ">
 							Noticeboard
 						</div>
-						<ScrollArea 
+						<ScrollArea
 							ref={scrollRef}
 							onMouseEnter={() => setIsHovered(true)}
 							onMouseLeave={() => setIsHovered(false)}
