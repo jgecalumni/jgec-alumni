@@ -120,7 +120,7 @@ const Login: React.FC = () => {
 			{/* Center Command Card */}
 			<main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 my-auto py-6">
 				<div className="w-full bg-white dark:bg-slate-900/95 rounded-3xl shadow-2xl shadow-slate-300/40 dark:shadow-black/70 border border-slate-200/90 dark:border-slate-800 backdrop-blur-xl overflow-hidden flex flex-col lg:flex-row">
-					
+
 					{/* Left Column: Institutional Brand & Authority Showcase */}
 					<div className="lg:w-1/2 relative bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 text-white p-8 sm:p-10 lg:p-12 flex flex-col justify-between overflow-hidden">
 						{/* Ambient Glows & Mesh Lines */}
@@ -205,7 +205,7 @@ const Login: React.FC = () => {
 					{/* Right Column: High-Performance Authentication Form */}
 					<div className="lg:w-1/2 p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-white dark:bg-slate-900">
 						<div className="max-w-md w-full mx-auto">
-							
+
 							{/* Form Title & Subtitle */}
 							<div className="mb-8">
 								<div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-400 text-xs font-semibold mb-3">
@@ -231,7 +231,7 @@ const Login: React.FC = () => {
 											if (res.user) {
 												try {
 													localStorage.setItem("user_info", JSON.stringify(res.user));
-												} catch {}
+												} catch { }
 											}
 											toast.success("Welcome back! Redirecting to dashboard...");
 											window.location.href = "/";
@@ -245,7 +245,7 @@ const Login: React.FC = () => {
 							>
 								{({ handleChange, handleBlur, values, errors, touched }) => (
 									<Form className="space-y-5" noValidate>
-										
+
 										{/* Email Field */}
 										<div className="space-y-1.5">
 											<div className="flex items-center justify-between">
@@ -258,11 +258,10 @@ const Login: React.FC = () => {
 											</div>
 											<div className="relative group">
 												<div
-													className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${
-														touched.email && errors.email
-															? "text-red-500"
-															: "text-slate-400 group-focus-within:text-primary"
-													}`}
+													className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${touched.email && errors.email
+														? "text-red-500"
+														: "text-slate-400 group-focus-within:text-primary"
+														}`}
 												>
 													<Mail className="h-4.5 w-4.5" />
 												</div>
@@ -277,11 +276,10 @@ const Login: React.FC = () => {
 													placeholder="admin@jgecalumni.in"
 													aria-invalid={touched.email && Boolean(errors.email)}
 													aria-describedby={touched.email && errors.email ? "email-error" : undefined}
-													className={`pl-10 h-11 sm:h-12 text-sm rounded-xl transition-all duration-200 ${
-														touched.email && errors.email
-															? "border-red-500 dark:border-red-500/80 bg-red-50/30 dark:bg-red-950/20 focus-visible:ring-red-500/30"
-															: "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 focus-visible:bg-white dark:focus-visible:bg-slate-900 focus-visible:ring-primary/20 focus-visible:border-primary"
-													}`}
+													className={`pl-10 h-11 sm:h-12 text-sm rounded-xl transition-all duration-200 ${touched.email && errors.email
+														? "border-red-500 dark:border-red-500/80 bg-red-50/30 dark:bg-red-950/20 focus-visible:ring-red-500/30"
+														: "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 focus-visible:bg-white dark:focus-visible:bg-slate-900 focus-visible:ring-primary/20 focus-visible:border-primary"
+														}`}
 												/>
 											</div>
 											{touched.email && errors.email && (
@@ -305,7 +303,7 @@ const Login: React.FC = () => {
 												>
 													Password <span className="text-red-500">*</span>
 												</Label>
-												
+
 												{/* Interactive Password Recovery Dialog */}
 												<Dialog open={forgotDialogOpen} onOpenChange={(open) => {
 													setForgotDialogOpen(open);
@@ -399,10 +397,10 @@ const Login: React.FC = () => {
 														<div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
 															<span>Association Office Support:</span>
 															<a
-																href="mailto:support@jgecalumni.in"
+																href="mailto:contact@jgecalumni.in"
 																className="font-medium text-primary hover:underline flex items-center gap-1"
 															>
-																support@jgecalumni.in
+																contact@jgecalumni.in
 																<ExternalLink className="w-3 h-3" />
 															</a>
 														</div>
@@ -412,11 +410,10 @@ const Login: React.FC = () => {
 
 											<div className="relative group">
 												<div
-													className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${
-														touched.password && errors.password
-															? "text-red-500"
-															: "text-slate-400 group-focus-within:text-primary"
-													}`}
+													className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${touched.password && errors.password
+														? "text-red-500"
+														: "text-slate-400 group-focus-within:text-primary"
+														}`}
 												>
 													<Lock className="h-4.5 w-4.5" />
 												</div>
@@ -431,11 +428,10 @@ const Login: React.FC = () => {
 													placeholder="••••••••"
 													aria-invalid={touched.password && Boolean(errors.password)}
 													aria-describedby={touched.password && errors.password ? "password-error" : undefined}
-													className={`pl-10 pr-11 h-11 sm:h-12 text-sm rounded-xl transition-all duration-200 ${
-														touched.password && errors.password
-															? "border-red-500 dark:border-red-500/80 bg-red-50/30 dark:bg-red-950/20 focus-visible:ring-red-500/30"
-															: "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 focus-visible:bg-white dark:focus-visible:bg-slate-900 focus-visible:ring-primary/20 focus-visible:border-primary"
-													}`}
+													className={`pl-10 pr-11 h-11 sm:h-12 text-sm rounded-xl transition-all duration-200 ${touched.password && errors.password
+														? "border-red-500 dark:border-red-500/80 bg-red-50/30 dark:bg-red-950/20 focus-visible:ring-red-500/30"
+														: "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 focus-visible:bg-white dark:focus-visible:bg-slate-900 focus-visible:ring-primary/20 focus-visible:border-primary"
+														}`}
 												/>
 												<button
 													type="button"
@@ -527,7 +523,7 @@ const Login: React.FC = () => {
 					</span>
 					<span>•</span>
 					<a
-						href="mailto:support@jgecalumni.in"
+						href="mailto:contact@jgecalumni.in"
 						className="hover:text-primary dark:hover:text-blue-400 transition-colors"
 					>
 						IT Support
