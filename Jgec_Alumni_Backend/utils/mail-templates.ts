@@ -1,5 +1,5 @@
 export const WelcomeMail = (name: string) => {
-	return `<body
+    return `<body
     style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f9; color: #333; line-height: 1.6;">
     <div
         style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
@@ -56,10 +56,10 @@ export const WelcomeMail = (name: string) => {
 };
 
 export const ScholarshipApplicationMail = (
-	applicant: string,
-	scholarship: string
+    applicant: string,
+    scholarship: string
 ) => {
-	return `
+    return `
         
 <body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #eef1f5; padding: 24px; margin: 0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
@@ -148,12 +148,12 @@ export const ScholarshipApplicationMail = (
 };
 
 export const ReceiptSubmitMail = (
-	name: string,
-	amount: number,
-	transactionId: string,
-	donationFor: string
+    name: string,
+    amount: number,
+    transactionId: string,
+    donationFor: string
 ) => {
-	return `
+    return `
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
         <!-- Header Section -->
@@ -192,12 +192,12 @@ export const ReceiptSubmitMail = (
 };
 
 export const ReceiptApprovalMail = (
-	name: string,
-	amount: number,
-	transactionId: string,
-	donationFor: string
+    name: string,
+    amount: number,
+    transactionId: string,
+    donationFor: string
 ) => {
-	return `
+    return `
     
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
@@ -241,12 +241,12 @@ export const ReceiptApprovalMail = (
 };
 
 export const approvedReceiptMail = (
-	name: string,
-	amount: number,
-	transactionId: string,
-	donationFor: string
+    name: string,
+    amount: number,
+    transactionId: string,
+    donationFor: string
 ) => {
-	return `
+    return `
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
         <!-- Header Section -->
@@ -285,12 +285,12 @@ export const approvedReceiptMail = (
 };
 
 export const denyReceiptMail = (
-	name: string,
-	amount: number,
-	transactionId: string,
-	donationFor: string
+    name: string,
+    amount: number,
+    transactionId: string,
+    donationFor: string
 ) => {
-	return `
+    return `
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
         <!-- Header Section -->
@@ -328,11 +328,11 @@ export const denyReceiptMail = (
 };
 
 export const contributionReceiptMail = (
-	name: string,
-	amount: number,
-	graduationYear: number
+    name: string,
+    amount: number,
+    graduationYear: number
 ) => {
-	return `
+    return `
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
         <!-- Header Section -->
@@ -371,7 +371,7 @@ export const contributionReceiptMail = (
 
 // Bulk Contribution Report Mail Template
 export const bulkContributionReportMail = (contributionCount: number, totalAmount: number) => {
-	return `
+    return `
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9fb; color: #333; line-height: 1.6;">
     <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
         <!-- Header Section -->
@@ -405,4 +405,243 @@ export const bulkContributionReportMail = (contributionCount: number, totalAmoun
     </div>
 </body>
 `;
+};
+
+
+export const AdminCreationMail = (
+    name: string,
+    email: string,
+    rawPassword: string,
+    loginUrl: string
+) => {
+    const displayName = name || 'Admin';
+    return `
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #eef1f5; padding: 24px; margin: 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+
+    <!-- Header / Logo band -->
+    <tr>
+      <td style="background-color: #0b2e59; padding: 28px 20px; text-align: center;">
+        <img src="https://res.cloudinary.com/daanphoru/image/upload/v1788075752/Logo_f6moef.webp"
+             alt="JGEC Alumni Association Logo"
+             width="72"
+             style="display: block; margin: 0 auto 12px auto; border-radius: 8px;">
+        <div style="color: #ffffff; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">
+          JGEC Alumni Association
+        </div>
+      </td>
+    </tr>
+
+    <!-- Status banner -->
+    <tr>
+      <td style="background-color: #eaf6ec; padding: 14px 20px; text-align: center; border-bottom: 1px solid #d7ecdb;">
+        <span style="color: #1f7a3d; font-weight: bold; font-size: 14px;">✓ Admin Account Created</span>
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 28px;">
+        
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          Dear <strong>${displayName}</strong>,
+        </p>
+
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          An administrative account has been provisioned for you on the JGEC Alumni Association portal.
+        </p>
+
+        <!-- Info card (Credentials) -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f9fc; border-left: 4px solid #0b2e59; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 16px 18px;">
+              <p style="font-size: 15px; color: #444; margin: 0 0 10px 0;">
+                Here are your temporary login credentials:
+              </p>
+              <p style="font-size: 15px; margin: 0 0 6px 0;">
+                <strong>Email:</strong> <span style="color: #0b2e59;">${email}</span>
+              </p>
+              <p style="font-size: 15px; margin: 0 0 16px 0;">
+                <strong>Password:</strong> <span style="color: #0b2e59; font-family: monospace; font-size: 16px;">${rawPassword}</span>
+              </p>
+              <a href="${loginUrl}" style="display: inline-block; padding: 10px 20px; background-color: #0b2e59; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">Log In to Admin Panel</a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 16px; color: #d9534f; margin: 0 0 16px 0; font-weight: bold;">
+          For security purposes, please log in and change your password immediately.
+        </p>
+
+        <p style="font-size: 16px; color: #555; margin-top: 24px;">
+          Best regards,<br>
+          <strong>JGEC Alumni Association System</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f4f6f9; padding: 16px 20px; text-align: center; border-top: 1px solid #e6e9ee;">
+        <p style="font-size: 12px; color: #888; margin: 0;">
+          Jalpaiguri Government Engineering College &middot; Alumni Association
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</body>
+    `;
+};
+
+export const ForgotPasswordMail = (
+    name: string,
+    resetUrl: string
+) => {
+    const displayName = name || 'Admin';
+    return `
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #eef1f5; padding: 24px; margin: 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+
+    <!-- Header / Logo band -->
+    <tr>
+      <td style="background-color: #0b2e59; padding: 28px 20px; text-align: center;">
+        <img src="https://res.cloudinary.com/daanphoru/image/upload/v1788075752/Logo_f6moef.webp"
+             alt="JGEC Alumni Association Logo"
+             width="72"
+             style="display: block; margin: 0 auto 12px auto; border-radius: 8px;">
+        <div style="color: #ffffff; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">
+          JGEC Alumni Association
+        </div>
+      </td>
+    </tr>
+
+    <!-- Status banner -->
+    <tr>
+      <td style="background-color: #fff4e5; padding: 14px 20px; text-align: center; border-bottom: 1px solid #ffe8cc;">
+        <span style="color: #b35900; font-weight: bold; font-size: 14px;">⚠ Password Reset Request</span>
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 28px;">
+        
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          Dear <strong>${displayName}</strong>,
+        </p>
+
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          We received a request to reset the password for your administrative account. 
+        </p>
+
+        <!-- Info card (Action) -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f9fc; border-left: 4px solid #b35900; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 16px 18px; text-align: center;">
+              <p style="font-size: 15px; color: #444; margin: 0 0 16px 0;">
+                Click the button below to set a new password. <strong>This link will expire in 15 minutes.</strong>
+              </p>
+              <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0b2e59; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 15px;">Reset My Password</a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 15px; color: #666; margin: 0 0 16px 0;">
+          If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+
+        <p style="font-size: 16px; color: #555; margin-top: 24px;">
+          Best regards,<br>
+          <strong>JGEC Alumni Association System</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f4f6f9; padding: 16px 20px; text-align: center; border-top: 1px solid #e6e9ee;">
+        <p style="font-size: 12px; color: #888; margin: 0;">
+          Jalpaiguri Government Engineering College &middot; Alumni Association<br>
+          This is an automated security email. Please do not reply.
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</body>
+    `;
+};
+
+
+export const PasswordResetSuccessMail = (
+    name: string
+) => {
+    const displayName = name || 'Admin';
+    return `
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #eef1f5; padding: 24px; margin: 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+
+    <!-- Header / Logo band -->
+    <tr>
+      <td style="background-color: #0b2e59; padding: 28px 20px; text-align: center;">
+        <img src="https://res.cloudinary.com/daanphoru/image/upload/v1788075752/Logo_f6moef.webp"
+             alt="JGEC Alumni Association Logo"
+             width="72"
+             style="display: block; margin: 0 auto 12px auto; border-radius: 8px;">
+        <div style="color: #ffffff; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">
+          JGEC Alumni Association
+        </div>
+      </td>
+    </tr>
+
+    <!-- Status banner -->
+    <tr>
+      <td style="background-color: #eaf6ec; padding: 14px 20px; text-align: center; border-bottom: 1px solid #d7ecdb;">
+        <span style="color: #1f7a3d; font-weight: bold; font-size: 14px;">✓ Password Updated Successfully</span>
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 28px;">
+        
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          Dear <strong>${displayName}</strong>,
+        </p>
+
+        <p style="font-size: 16px; color: #444; margin: 0 0 16px 0;">
+          This email is to confirm that the password for your administrative account has been successfully changed.
+        </p>
+
+        <!-- Info card (Security Warning) -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fcf4f4; border-left: 4px solid #d9534f; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 16px 18px;">
+              <p style="font-size: 15px; color: #444; margin: 0;">
+                <strong>Security Notice:</strong> If you did not perform this action, please contact the Super Admin immediately as your account may have been compromised.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 16px; color: #555; margin-top: 24px;">
+          Best regards,<br>
+          <strong>JGEC Alumni Association System</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f4f6f9; padding: 16px 20px; text-align: center; border-top: 1px solid #e6e9ee;">
+        <p style="font-size: 12px; color: #888; margin: 0;">
+          Jalpaiguri Government Engineering College &middot; Alumni Association
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</body>
+    `;
 };

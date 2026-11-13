@@ -37,22 +37,32 @@ import {
 } from "../ui/dialog";
 import { validationSchema } from "@/schemas/LoginSchema";
 import { useLoginMutation } from "@/store/baseApi";
+import { useForgotPasswordMutation } from "@/store/feature/user-feature";
 
 const Login: React.FC = () => {
 	const router = useRouter();
 	const [login, { isLoading, isError, error, isSuccess }] = useLoginMutation();
+	const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
 	const [showPassword, setShowPassword] = useState(false);
 	const [rememberMe, setRememberMe] = useState(true);
+	const [forgotEmail, setForgotEmail] = useState("");
+	const [forgotDialogOpen, setForgotDialogOpen] = useState(false);
+	const [forgotSuccess, setForgotSuccess] = useState(false);
 
-	useEffect(() => {
-		if (isError) {
-			toast.error((error as any)?.data?.message || "Authentication failed. Please verify your credentials.");
+	const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!forgotEmail) {
+			toast.error("Please enter your administrator email address.");
+			return;
 		}
-		if (isSuccess) {
-			toast.success("Welcome back! Redirecting to dashboard...");
-			router.push("/");
+		try {
+			const res = await forgotPassword({ email: forgotEmail }).unwrap();
+			setForgotSuccess(true);
+			toast.success(res.message || "Password reset instructions sent.");
+		} catch (err: any) {
+			toast.error(err?.data?.message || "Failed to request password reset.");
 		}
-	}, [isError, error, isSuccess, router]);
+	};
 
 	return (
 		<section className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -215,7 +225,22 @@ const Login: React.FC = () => {
 								initialValues={{ email: "", password: "" }}
 								validationSchema={validationSchema}
 								onSubmit={async (values) => {
-									await login(values);
+									try {
+										const res = await login(values).unwrap();
+										if (res.success) {
+											if (res.user) {
+												try {
+													localStorage.setItem("user_info", JSON.stringify(res.user));
+												} catch {}
+											}
+											toast.success("Welcome back! Redirecting to dashboard...");
+											window.location.href = "/";
+										} else {
+											toast.error(res.message || "Authentication failed.");
+										}
+									} catch (err: any) {
+										toast.error(err?.data?.message || "Authentication failed. Please verify your credentials.");
+									}
 								}}
 							>
 								{({ handleChange, handleBlur, values, errors, touched }) => (
@@ -281,46 +306,105 @@ const Login: React.FC = () => {
 													Password <span className="text-red-500">*</span>
 												</Label>
 												
-												{/* Assistance Trigger Dialog */}
-												<Dialog>
+												{/* Interactive Password Recovery Dialog */}
+												<Dialog open={forgotDialogOpen} onOpenChange={(open) => {
+													setForgotDialogOpen(open);
+													if (!open) {
+														setForgotSuccess(false);
+														setForgotEmail("");
+													}
+												}}>
 													<DialogTrigger asChild>
 														<button
 															type="button"
+															onClick={() => {
+																setForgotEmail(values.email || "");
+																setForgotDialogOpen(true);
+															}}
 															className="text-xs font-medium text-primary hover:text-primary/80 dark:text-blue-400 hover:underline transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded"
 														>
 															Forgot password?
 														</button>
 													</DialogTrigger>
-													<DialogContent>
+													<DialogContent className="max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl">
 														<DialogHeader>
-															<div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/50 text-primary flex items-center justify-center mb-2">
-																<HelpCircle className="w-5 h-5" />
+															<div className="w-11 h-11 rounded-2xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-400 flex items-center justify-center mb-2">
+																<KeyRound className="w-5 h-5" />
 															</div>
-															<DialogTitle className="text-lg font-bold">
-																Account Recovery & Assistance
+															<DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+																Reset Administrator Password
 															</DialogTitle>
-															<DialogDescription className="text-sm text-slate-500 dark:text-slate-400 pt-2 leading-relaxed">
-																Administrator accounts are issued and maintained by the central JGEC Alumni Governing Body.
-																If you have forgotten your password or need your access reset, please contact the Lead System Administrator:
+															<DialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+																Enter your registered administrative email to receive an official cryptographic password reset link.
 															</DialogDescription>
 														</DialogHeader>
-														<div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2 text-xs">
-															<div className="flex items-center justify-between">
-																<span className="text-slate-500 dark:text-slate-400">Technical Support:</span>
-																<a
-																	href="mailto:support@jgecalumni.in"
-																	className="font-medium text-primary dark:text-blue-400 hover:underline flex items-center gap-1"
+
+														{forgotSuccess ? (
+															<div className="my-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 space-y-2">
+																<div className="flex items-center gap-2 font-semibold text-sm">
+																	<CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+																	Reset Instructions Dispatched
+																</div>
+																<p className="text-xs text-slate-600 dark:text-slate-300">
+																	If an active administrator account exists for <span className="font-semibold text-slate-900 dark:text-white">{forgotEmail}</span>, a secure one-time reset link has been dispatched to that inbox. The link expires in 15 minutes.
+																</p>
+																<Button
+																	type="button"
+																	onClick={() => setForgotDialogOpen(false)}
+																	className="w-full mt-3 h-9 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
 																>
-																	support@jgecalumni.in
-																	<ExternalLink className="w-3 h-3" />
-																</a>
+																	Return to Login
+																</Button>
 															</div>
-															<div className="flex items-center justify-between">
-																<span className="text-slate-500 dark:text-slate-400">Association Office:</span>
-																<span className="font-medium text-slate-700 dark:text-slate-200">
-																	Jalpaiguri Govt. Engg. College Campus
-																</span>
-															</div>
+														) : (
+															<form onSubmit={handleForgotPasswordSubmit} className="space-y-4 my-2">
+																<div className="space-y-1.5">
+																	<Label htmlFor="forgot-email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+																		Admin Email Address
+																	</Label>
+																	<div className="relative">
+																		<Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+																		<Input
+																			id="forgot-email"
+																			type="email"
+																			required
+																			placeholder="admin@jgecalumni.in"
+																			value={forgotEmail}
+																			onChange={(e) => setForgotEmail(e.target.value)}
+																			className="pl-9 h-11 text-xs rounded-xl"
+																		/>
+																	</div>
+																</div>
+
+																<Button
+																	type="submit"
+																	disabled={isForgotLoading}
+																	className="w-full h-11 text-xs font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-2"
+																>
+																	{isForgotLoading ? (
+																		<>
+																			<Loader2 className="w-4 h-4 animate-spin" />
+																			Sending Reset Link...
+																		</>
+																	) : (
+																		<>
+																			Send Password Reset Link
+																			<ArrowRight className="w-3.5 h-3.5" />
+																		</>
+																	)}
+																</Button>
+															</form>
+														)}
+
+														<div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+															<span>Association Office Support:</span>
+															<a
+																href="mailto:support@jgecalumni.in"
+																className="font-medium text-primary hover:underline flex items-center gap-1"
+															>
+																support@jgecalumni.in
+																<ExternalLink className="w-3 h-3" />
+															</a>
 														</div>
 													</DialogContent>
 												</Dialog>

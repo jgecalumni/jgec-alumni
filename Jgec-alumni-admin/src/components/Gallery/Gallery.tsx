@@ -1,19 +1,18 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { Button } from "../ui/button";
 import {
 	ArrowLeft,
 	ArrowRight,
-	Link,
 	Loader2,
 	PlusIcon,
 	Upload,
 	Folder,
-	FolderOpen,
 	Images,
 	Edit2,
 	Search,
 	Trash2,
+	Image as ImageIcon
 } from "lucide-react";
 import { debounce } from "@/utils";
 import {
@@ -37,198 +36,253 @@ const Gallery = () => {
 	const [searchQuery, setSearchQuery] = useState<string>("");
 	const [page, setPage] = useState<number>(1);
 	const [totalPages, setTotalPages] = useState<number>(1);
-	const [editCategory, setEditCategory] = useState<any>("");
+	const [editCategory, setEditCategory] = useState<any>(null);
 
 	const { data, isLoading, isError, error, refetch } = useGetCategoryQuery({
 		page: page,
 		search: searchQuery,
 	});
+
 	const [
 		deleteCategory,
-		{ isLoading: deleteLoading, error: deleteError, isError: isDeleteError },
+		{ isError: isDeleteError, error: deleteError },
 	] = useDeleteCategoryMutation();
+
 	useEffect(() => {
 		if (isError) {
-			toast.error((error as any)?.data.message || "Failed to fetch categories");
+			toast.error((error as any)?.data?.message || "Failed to fetch categories");
 		}
 		if (data) {
-			setTotalPages(data.totalPages);
+			setTotalPages(data.totalPages || 1);
 		}
 		if (isDeleteError) {
-			toast.error(
-				(deleteError as any)?.data.message || "Failed to delete category"
-			);
+			toast.error((deleteError as any)?.data?.message || "Failed to delete category");
 		}
 	}, [isError, error, data, isDeleteError, deleteError]);
 
 	const handleSearch = debounce(async (e: any) => {
-		const searchValue = e.target.value;
-		setSearchQuery(searchValue);
-	}, 1000);
-	const handleDelete = async (id: string) => {
-		setLoadingId(id)
-		const res = await deleteCategory(id);
-		if (res?.data?.success) {
-			toast.success("Category deleted successfully");
-			refetch();
+		setSearchQuery(e.target.value);
+		setPage(1);
+	}, 600);
+
+	const handleDelete = async (id: string, name: string) => {
+		if (!window.confirm(`Are you sure you want to delete album "${name}" and all its photos?`)) {
+			return;
 		}
-		setLoadingId(null);
+		setLoadingId(id);
+		try {
+			const res = await deleteCategory(id);
+			if (res?.data?.success) {
+				toast.success("Category deleted successfully");
+				refetch();
+			}
+		} finally {
+			setLoadingId(null);
+		}
 	};
+
 	if (isLoading) return <Loading />;
 
+	const categories = data?.data || [];
+	const totalCount = data?.totalCount || categories.length;
+
 	return (
-		<>
-			{/* Header */}
-			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-				<div className="flex flex-col">
-					<h1 className="text-3xl font-bold tracking-tight lg:text-4xl text-foreground">Gallery</h1>
-					<p className="text-muted-foreground mt-1 text-sm lg:text-base">Manage photo categories and galleries.</p>
-				</div>
-				<Button
-					onClick={() => setOpenModal(true)}
-					className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 rounded-xl px-5 h-11"
-				>
-					<PlusIcon size={18} strokeWidth={2.5} />
-					<span className="font-semibold">Add Category</span>
-				</Button>
-			</div>
-			
-			<div className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl shadow-xl overflow-hidden mb-8">
-				{/* Toolbar */}
-				<div className="p-6 flex flex-col sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between border-b border-border/50 bg-muted/10">
-					<div className="relative w-full sm:w-80 group">
-						<div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-indigo-500 transition-colors">
-							<Search size={18} />
+		<div className="w-full space-y-6">
+			{/* Command Header */}
+			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+				<div className="space-y-1">
+					<div className="flex items-center gap-3">
+						<div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+							<ImageIcon className="h-5 w-5" />
 						</div>
+						<div>
+							<h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+								Campus Photo Gallery
+							</h1>
+							<p className="text-sm text-slate-500 dark:text-slate-400">
+								Curate alumni gatherings, jubilee celebrations, reunions, and archive albums.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<button
+					onClick={() => {
+						setEditCategory(null);
+						setOpenModal(true);
+					}}
+					className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/95 rounded-xl transition-all shadow-sm active:scale-95"
+				>
+					<PlusIcon className="h-4 w-4" />
+					<span>Create New Album</span>
+				</button>
+			</div>
+
+			{/* Main Card */}
+			<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+				{/* Toolbar */}
+				<div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+					<div className="relative flex-1 max-w-md">
+						<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
 						<input
 							type="text"
 							onChange={handleSearch}
-							className="block w-full pl-10 pr-4 py-2.5 bg-background border border-border/60 rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-sm"
-							placeholder="Search for category..."
+							placeholder="Search album collection by title..."
+							className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
 						/>
 					</div>
-					
-					<div className="text-sm text-muted-foreground font-medium px-4 py-2 bg-background rounded-xl border border-border/50 shadow-sm">
-						Total Categories: <span className="text-foreground font-bold">{data?.totalCount || data?.data?.length || 0}</span>
-					</div>
-				</div>
-				
-				{/* Grid Layout */}
-				<div className="p-6">
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-						{data?.data && data.data.length > 0 ? (
-							data.data.map((item: any) => (
-								<div 
-									key={item.id} 
-									className="group flex flex-col bg-background/50 border border-border/60 rounded-2xl p-5 hover:bg-muted/30 hover:border-indigo-500/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
-								>
-									{/* Top decorative gradient */}
-									<div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-									
-									<div className="flex items-start justify-between mb-4">
-										<div className="p-3.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors">
-											<Folder size={24} strokeWidth={2} className="group-hover:scale-110 transition-transform duration-300"/>
-										</div>
-										<div className="flex flex-col items-end">
-											<span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 shadow-sm">
-												{item.images?.length || 0} Photos
-											</span>
-										</div>
-									</div>
-									
-									<div className="flex-1 mb-6">
-										<h3 className="text-lg font-bold text-foreground truncate mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.name}>
-											{item.name}
-										</h3>
-										<p className="text-xs text-muted-foreground font-medium">Gallery Collection</p>
-									</div>
 
-									{/* Action Buttons */}
-									<div className="flex items-center justify-between pt-4 border-t border-border/50">
-										<div className="flex items-center gap-2">
-											<button 
-												className="flex items-center justify-center w-9 h-9 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-500/20 hover:text-emerald-700 transition-all shadow-sm hover:shadow"
-												onClick={(e) => { e.stopPropagation(); setOpenImage(true); setCategoryID(item.id); }}
-												title="Upload Photo"
-											>
-												<Upload size={16} strokeWidth={2.5} />
-											</button>
-											<button 
-												className="flex items-center justify-center w-9 h-9 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:text-blue-700 transition-all shadow-sm hover:shadow"
-												onClick={(e) => { e.stopPropagation(); setViewImages(item); }}
-												title="View Gallery"
-											>
-												<Images size={16} strokeWidth={2.5} />
-											</button>
-										</div>
-										
-										<div className="flex items-center gap-2">
-											<button 
-												className="flex items-center justify-center w-9 h-9 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-500/20 hover:text-amber-700 transition-all shadow-sm hover:shadow"
-												onClick={(e) => { e.stopPropagation(); setEditCategory(item); }}
-												title="Edit Category"
-											>
-												<Edit2 size={16} strokeWidth={2.5} />
-											</button>
-											<button 
-												className="flex items-center justify-center w-9 h-9 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-700 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-												onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-												disabled={loadingId === item.id}
-												title="Delete Category"
-											>
-												{loadingId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} strokeWidth={2.5} />}
-											</button>
-										</div>
-									</div>
-								</div>
-							))
-						) : (
-							<div className="col-span-full py-20 flex flex-col items-center justify-center text-muted-foreground bg-muted/10 rounded-2xl border-2 border-dashed border-border/50">
-								<div className="p-4 bg-muted/30 rounded-full mb-4">
-									<FolderOpen size={48} className="opacity-40" strokeWidth={1.5} />
-								</div>
-								<p className="text-xl font-bold text-foreground mb-1">No Categories Found</p>
-								<p className="text-sm">Create a new category to get started with your gallery.</p>
-								<Button
-									variant="outline"
-									onClick={() => setOpenModal(true)}
-									className="mt-6 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
-								>
-									<PlusIcon size={16} className="mr-2" />
-									Create Category
-								</Button>
-							</div>
-						)}
+					<div className="text-xs text-slate-500 dark:text-slate-400">
+						Total Albums: <strong className="text-slate-900 dark:text-slate-100">{totalCount}</strong>
 					</div>
 				</div>
-				
+
+				{/* Album Grid */}
+				<div className="p-4 sm:p-6">
+					{categories.length > 0 ? (
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+							{categories.map((item: any) => {
+								const photoCount = item.images?.length || 0;
+								const isDeleting = loadingId === item.id;
+
+								return (
+									<div
+										key={item.id}
+										onClick={() => setViewImages(item)}
+										className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-900 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+									>
+										<div>
+											<div className="flex items-start justify-between gap-3 mb-3">
+												<div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+													<Folder className="h-5 w-5" />
+												</div>
+												<span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+													{photoCount} {photoCount === 1 ? "Photo" : "Photos"}
+												</span>
+											</div>
+
+											<h3
+												className="font-bold text-slate-900 dark:text-slate-100 text-base truncate group-hover:text-primary transition-colors"
+												title={item.name}
+											>
+												{item.name}
+											</h3>
+											<p className="text-xs text-slate-400 mt-0.5">Alumni Album Collection</p>
+										</div>
+
+										<div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+											<div className="flex items-center gap-1">
+												<button
+													type="button"
+													title="Upload Photos"
+													onClick={(e) => {
+														e.stopPropagation();
+														setCategoryID(item.id);
+														setOpenImage(true);
+													}}
+													className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+												>
+													<Upload className="h-4 w-4" />
+												</button>
+												<button
+													type="button"
+													title="View Gallery"
+													onClick={(e) => {
+														e.stopPropagation();
+														setViewImages(item);
+													}}
+													className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+												>
+													<Images className="h-4 w-4" />
+												</button>
+											</div>
+
+											<div className="flex items-center gap-1">
+												<button
+													type="button"
+													title="Edit Album Title"
+													onClick={(e) => {
+														e.stopPropagation();
+														setEditCategory(item);
+													}}
+													className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+												>
+													<Edit2 className="h-4 w-4" />
+												</button>
+												<button
+													type="button"
+													title="Delete Album"
+													disabled={isDeleting}
+													onClick={(e) => {
+														e.stopPropagation();
+														handleDelete(item.id, item.name);
+													}}
+													className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
+												>
+													{isDeleting ? (
+														<Loader2 className="h-4 w-4 animate-spin" />
+													) : (
+														<Trash2 className="h-4 w-4" />
+													)}
+												</button>
+											</div>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					) : (
+						<div className="py-16 text-center text-slate-500">
+							<div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+								<div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
+									<Folder className="h-6 w-6" />
+								</div>
+								<p className="font-semibold text-slate-900 dark:text-slate-100">No albums found</p>
+								<p className="text-xs text-slate-500 mt-1">
+									Create a photo album category to upload reunions and event photos.
+								</p>
+								<button
+									onClick={() => setOpenModal(true)}
+									className="mt-4 px-3.5 py-1.5 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+								>
+									Create First Album
+								</button>
+							</div>
+						</div>
+					)}
+				</div>
+
 				{/* Pagination */}
-				<div className={`flex items-center justify-between p-6 border-t border-border/50 bg-muted/10 ${data?.data?.length > 0 ? "block" : "hidden"}`}>
-					<div className="text-sm text-muted-foreground">
-						Showing Page <span className="font-bold text-foreground">{page}</span> of <span className="font-bold text-foreground">{totalPages}</span>
-					</div>
+				<div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-900/50">
+					<span>
+						Page <strong className="text-slate-900 dark:text-slate-100">{page}</strong> of{" "}
+						<strong className="text-slate-900 dark:text-slate-100">{totalPages}</strong>
+					</span>
 					<div className="flex items-center gap-2">
 						<button
-							onClick={() => {setPage(page - 1); window.scrollTo(0, 0)}}
-							disabled={page === 1}
-							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
-							<ArrowLeft size={16} />
-							Prev
+							disabled={page <= 1}
+							onClick={() => setPage(Math.max(1, page - 1))}
+							className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+						>
+							<ArrowLeft className="h-3.5 w-3.5" />
+							<span>Prev</span>
 						</button>
 						<button
-							onClick={() => {setPage(page + 1); window.scrollTo(0, 0)}}
-							disabled={page === totalPages}
-							className="px-4 py-2 bg-background border border-border hover:bg-muted text-foreground rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm hover:shadow hover:scale-[1.02] active:scale-95">
-							Next
-							<ArrowRight size={16} />
+							disabled={page >= totalPages}
+							onClick={() => setPage(page + 1)}
+							className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+						>
+							<span>Next</span>
+							<ArrowRight className="h-3.5 w-3.5" />
 						</button>
 					</div>
 				</div>
 			</div>
-			
+
+			{/* Dialogs */}
 			{(openModal || editCategory) && (
 				<ModalGalleryCategory
-					open={openModal || editCategory}
+					open={openModal || !!editCategory}
 					closed={() => {
 						setOpenModal(false);
 						setEditCategory(null);
@@ -249,7 +303,7 @@ const Gallery = () => {
 			)}
 			{viewImages && (
 				<ModalGalleryImageView
-					open={viewImages}
+					open={!!viewImages}
 					closed={() => {
 						setViewImages(null);
 						refetch();
@@ -257,7 +311,7 @@ const Gallery = () => {
 					details={viewImages}
 				/>
 			)}
-		</>
+		</div>
 	);
 };
 

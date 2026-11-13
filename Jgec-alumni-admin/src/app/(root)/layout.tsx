@@ -1,51 +1,66 @@
 "use client";
 
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-	SidebarProvider,
-	SidebarTrigger,
-	useSidebar,
-} from "@/components/ui/sidebar";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLogoutMutation } from "@/store/baseApi";
-import React, { useEffect, useRef, useState } from "react";
-import { clearAuthCookies } from "@/app/actions";
 import toast from "react-hot-toast";
-import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Newspaper, LayoutDashboard, BellRing, GraduationCap, CalendarDays, Images, Users, Receipt, CreditCard, Folder, LogOut, X } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import {
+	LayoutDashboard,
+	Users,
+	CalendarDays,
+	BellRing,
+	GraduationCap,
+	Images,
+	Newspaper,
+	Receipt,
+	CreditCard,
+	Folder,
+	ChevronDown,
+	LogOut,
+	Loader2,
+	ExternalLink,
+	PanelLeftClose,
+	PanelLeft,
+	Menu,
+	X,
+	ShieldAlert,
+	Lock,
+} from "lucide-react";
 
-function MobileSidebarCloseButton() {
-	const { setOpenMobile, isMobile } = useSidebar();
-	if (!isMobile) return null;
-	return (
-		<button
-			onClick={(e) => {
-				e.preventDefault();
-				setOpenMobile(false);
-			}}
-			className="md:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors hover:bg-white/50 dark:hover:bg-white/10 rounded-xl"
-			aria-label="Close Sidebar"
-		>
-			<X size={20} />
-		</button>
-	);
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useLogoutMutation } from "@/store/baseApi";
+import { clearAuthCookies } from "@/app/actions";
+
+const DEFAULT_WIDTH = 260;
+const MIN_WIDTH = 210;
+const MAX_WIDTH = 420;
+const COLLAPSED_WIDTH = 70;
+
+interface CurrentUser {
+	id?: string;
+	name?: string;
+	email?: string;
+	role?: string;
+	allowedPaths?: string[];
 }
+
+const getStoredUser = (): CurrentUser | null => {
+	if (typeof window === "undefined") return null;
+	try {
+		const stored = localStorage.getItem("user_info");
+		if (stored) return JSON.parse(stored);
+	} catch {}
+	try {
+		const cookies = document.cookie.split("; ");
+		const userCookie = cookies.find((c) => c.startsWith("user_session="));
+		if (userCookie) {
+			const raw = decodeURIComponent(userCookie.split("=")[1]);
+			return JSON.parse(raw);
+		}
+	} catch {}
+	return null;
+};
 
 export default function Layout({
 	children,
@@ -55,6 +70,122 @@ export default function Layout({
 	const pathname = usePathname();
 	const router = useRouter();
 	const [logout, { isLoading }] = useLogoutMutation();
+
+	// Sidebar resizable state
+	const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
+	const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+	const [isResizing, setIsResizing] = useState<boolean>(false);
+	const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+	const [documentsOpen, setDocumentsOpen] = useState<boolean>(pathname.startsWith("/documents"));
+
+	const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+	const [isMounted, setIsMounted] = useState<boolean>(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+		const user = getStoredUser();
+		if (user) {
+			setCurrentUser(user);
+		}
+	}, []);
+
+	// Route Authorization check
+	const isPathAllowed = useCallback(
+		(targetPath: string) => {
+			if (!isMounted || !currentUser) return true; // During SSR / hydration, default to true to match HTML
+			if (currentUser.role === "SUPER_ADMIN") return true;
+			if (currentUser.allowedPaths?.includes("*")) return true;
+			return Boolean(
+				currentUser.allowedPaths?.some(
+					(p) =>
+						targetPath === p ||
+						(p !== "/" && targetPath.startsWith(`${p}/`)) ||
+						(p === "/" && targetPath === "/")
+				)
+			);
+		},
+		[isMounted, currentUser]
+	);
+
+	// Client-side guard: redirect immediately if visiting an unauthorized URL
+	useEffect(() => {
+		if (!isMounted || !currentUser) return;
+		if (!isPathAllowed(pathname)) {
+			toast.error(`Access restricted: You do not have permission to view this section.`);
+			const fallback =
+				currentUser.allowedPaths?.find((p) => p !== "*" && p !== pathname) || "/";
+			router.push(fallback);
+		}
+	}, [pathname, isMounted, currentUser, isPathAllowed, router]);
+
+	// Load persisted width and collapsed preference from localStorage
+	useEffect(() => {
+		const savedWidth = localStorage.getItem("jgec_admin_sidebar_width");
+		if (savedWidth) {
+			const parsed = parseInt(savedWidth, 10);
+			if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
+				setSidebarWidth(parsed);
+			}
+		}
+		const savedCollapsed = localStorage.getItem("jgec_admin_sidebar_collapsed");
+		if (savedCollapsed !== null) {
+			setIsCollapsed(savedCollapsed === "true");
+		}
+	}, []);
+
+	// Handle Drag Resizing
+	const startResizing = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		setIsResizing(true);
+	}, []);
+
+	const stopResizing = useCallback(() => {
+		setIsResizing(false);
+	}, []);
+
+	const handleMouseMove = useCallback(
+		(e: MouseEvent) => {
+			if (!isResizing) return;
+			const newWidth = Math.min(Math.max(e.clientX, MIN_WIDTH), MAX_WIDTH);
+			setSidebarWidth(newWidth);
+			localStorage.setItem("jgec_admin_sidebar_width", newWidth.toString());
+		},
+		[isResizing]
+	);
+
+	useEffect(() => {
+		if (isResizing) {
+			window.addEventListener("mousemove", handleMouseMove);
+			window.addEventListener("mouseup", stopResizing);
+			document.body.style.userSelect = "none";
+			document.body.style.cursor = "col-resize";
+		} else {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", stopResizing);
+			document.body.style.userSelect = "";
+			document.body.style.cursor = "";
+		}
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", stopResizing);
+			document.body.style.userSelect = "";
+			document.body.style.cursor = "";
+		};
+	}, [isResizing, handleMouseMove, stopResizing]);
+
+	const toggleCollapse = () => {
+		setIsCollapsed((prev) => {
+			const next = !prev;
+			localStorage.setItem("jgec_admin_sidebar_collapsed", next ? "true" : "false");
+			return next;
+		});
+	};
+
+	const resetWidth = () => {
+		setSidebarWidth(DEFAULT_WIDTH);
+		localStorage.setItem("jgec_admin_sidebar_width", DEFAULT_WIDTH.toString());
+		toast.success("Sidebar width reset to default (260px)");
+	};
 
 	const handleLogout = async () => {
 		try {
@@ -67,320 +198,749 @@ export default function Layout({
 		} catch (error: any) {
 			toast.error(error?.data?.message || "Failed to logout from server");
 		} finally {
-			// Guarantee cookie deletion via Next.js Server Action
+			try {
+				localStorage.removeItem("user_info");
+			} catch {}
 			await clearAuthCookies();
 			window.location.href = "/login";
 		}
 	};
 
-	// Navigation items
-	const navItems = [
-		{ name: "Dashboard", path: "/", icon: <LayoutDashboard size={16} />, gradient: "from-blue-500 to-cyan-500" },
-		{ name: "Notice", path: "/notice", icon: <BellRing size={16} />, gradient: "from-orange-500 to-amber-500" },
-		{ name: "Scholarship", path: "/scholarship", icon: <GraduationCap size={16} />, gradient: "from-green-500 to-emerald-500" },
-		{ name: "Events", path: "/events", icon: <CalendarDays size={16} />, gradient: "from-purple-500 to-fuchsia-500" },
-		{ name: "Gallery", path: "/gallery", icon: <Images size={16} />, gradient: "from-pink-500 to-rose-500" },
-		{ name: "Members", path: "/members", icon: <Users size={16} />, gradient: "from-cyan-500 to-sky-500" },
-		{ name: "Receipt", path: "/receipt", icon: <Receipt size={16} />, gradient: "from-emerald-500 to-teal-500" },
-		{ name: "Payments", path: "/payments", icon: <CreditCard size={16} />, gradient: "from-rose-500 to-red-500" },
-		{ name: "Media & Press Release", path: "/media&press-release", icon: <Newspaper size={16} />, gradient: "from-indigo-500 to-violet-500" },
+	// Primary navigation items with dedicated vibrant color accents
+	const mainNavItems = [
+		{
+			name: "Dashboard",
+			path: "/",
+			icon: LayoutDashboard,
+			color: "text-blue-500",
+			bgColor: "bg-blue-500/10 dark:bg-blue-500/20",
+			activeColor: "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 ring-1 ring-blue-500/30",
+		},
+		{
+			name: "Members",
+			path: "/members",
+			icon: Users,
+			color: "text-cyan-500",
+			bgColor: "bg-cyan-500/10 dark:bg-cyan-500/20",
+			activeColor: "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-300 ring-1 ring-cyan-500/30",
+		},
+		{
+			name: "Events & Reunions",
+			path: "/events",
+			icon: CalendarDays,
+			color: "text-purple-500",
+			bgColor: "bg-purple-500/10 dark:bg-purple-500/20",
+			activeColor: "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 ring-1 ring-purple-500/30",
+		},
+		{
+			name: "Notice Board",
+			path: "/notice",
+			icon: BellRing,
+			color: "text-amber-500",
+			bgColor: "bg-amber-500/10 dark:bg-amber-500/20",
+			activeColor: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 ring-1 ring-amber-500/30",
+		},
+		{
+			name: "Scholarships",
+			path: "/scholarship",
+			icon: GraduationCap,
+			color: "text-emerald-500",
+			bgColor: "bg-emerald-500/10 dark:bg-emerald-500/20",
+			activeColor: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 ring-1 ring-emerald-500/30",
+		},
 	];
+
+	const mediaNavItems = [
+		{
+			name: "Photo Gallery",
+			path: "/gallery",
+			icon: Images,
+			color: "text-pink-500",
+			bgColor: "bg-pink-500/10 dark:bg-pink-500/20",
+			activeColor: "bg-pink-50 dark:bg-pink-950/60 text-pink-600 dark:text-pink-300 ring-1 ring-pink-500/30",
+		},
+		{
+			name: "Media & Press",
+			path: "/media&press-release",
+			icon: Newspaper,
+			color: "text-indigo-500",
+			bgColor: "bg-indigo-500/10 dark:bg-indigo-500/20",
+			activeColor: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 ring-1 ring-indigo-500/30",
+		},
+	];
+
+	const financeNavItems = [
+		{
+			name: "Donation Receipts",
+			path: "/receipt",
+			icon: Receipt,
+			color: "text-teal-500",
+			bgColor: "bg-teal-500/10 dark:bg-teal-500/20",
+			activeColor: "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 ring-1 ring-teal-500/30",
+		},
+		{
+			name: "Payments Ledger",
+			path: "/payments",
+			icon: CreditCard,
+			color: "text-rose-500",
+			bgColor: "bg-rose-500/10 dark:bg-rose-500/20",
+			activeColor: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 ring-1 ring-rose-500/30",
+		},
+	];
+
+	const systemNavItems = [
+		{
+			name: "User Governance",
+			path: "/users",
+			icon: ShieldAlert,
+			color: "text-violet-500",
+			bgColor: "bg-violet-500/10 dark:bg-violet-500/20",
+			activeColor: "bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-300 ring-1 ring-violet-500/30",
+		},
+	];
+
 	const documentSections = [
 		{ name: "Scholarships", path: "/documents/scholarship" },
 		{ name: "Kanchenjunga", path: "/documents/kanchenjunga" },
-		{ name: "Giving-Back", path: "/documents/giving-back" },
-		{ name: "Audit-Report", path: "/documents/audit-report" },
-		{ name: "AGM-MOM", path: "/documents/agm-mom" },
+		{ name: "Giving Back", path: "/documents/giving-back" },
+		{ name: "Audit Reports", path: "/documents/audit-report" },
+		{ name: "AGM Minutes", path: "/documents/agm-mom" },
 	];
 
-	// Desktop Navbar Scroll Logic
-	const scrollContainerRef = useRef<HTMLDivElement>(null);
-	const [canScrollLeft, setCanScrollLeft] = useState(false);
-	const [canScrollRight, setCanScrollRight] = useState(false);
-
-	const checkScroll = () => {
-		if (scrollContainerRef.current) {
-			const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-			setCanScrollLeft(scrollLeft > 0);
-			// Use a small threshold (e.g. 1px) to account for fractional pixel rounding errors
-			setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 1);
-		}
+	const getPageTitle = () => {
+		if (pathname === "/") return "Executive Dashboard";
+		if (pathname.startsWith("/members")) return "Alumni Directory";
+		if (pathname.startsWith("/events")) return "Events & Reunions";
+		if (pathname.startsWith("/notice")) return "Notice Board";
+		if (pathname.startsWith("/scholarship")) return "Scholarships & Grants";
+		if (pathname.startsWith("/gallery")) return "Photo Gallery";
+		if (pathname.startsWith("/media&press-release")) return "Media & Press";
+		if (pathname.startsWith("/receipt")) return "Donation Receipts";
+		if (pathname.startsWith("/payments")) return "Payments Ledger";
+		if (pathname.startsWith("/documents")) return "Official Documents";
+		if (pathname.startsWith("/users")) return "User Management & RBAC";
+		return "Console";
 	};
 
-	useEffect(() => {
-		checkScroll();
-		window.addEventListener("resize", checkScroll);
-		return () => window.removeEventListener("resize", checkScroll);
-	}, []);
+	// Sidebar Inner Content Component (used for both desktop and mobile drawer)
+	const renderSidebarContent = (mobile = false) => {
+		const showFull = !isCollapsed || mobile;
 
-	const scrollLeft = () => {
-		if (scrollContainerRef.current) {
-			scrollContainerRef.current.scrollBy({ left: -250, behavior: "smooth" });
-		}
+		return (
+			<div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 select-none overflow-hidden">
+
+				{/* 1. Header: Logo, Branding & Collapse Toggle */}
+				<div className="shrink-0 border-b border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900">
+					{showFull ? (
+						// Expanded Header
+						<div className="flex items-center justify-between px-3.5 py-3">
+							<div className="flex items-center gap-3 min-w-0">
+								<div className="relative w-9 h-9 shrink-0 rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-0.5 flex items-center justify-center shadow-sm">
+									<Image
+										src="/assets/Logo.webp"
+										alt="JGEC Alumni Logo"
+										width={32}
+										height={32}
+										className="object-contain w-full h-full"
+										priority
+									/>
+								</div>
+								<div className="flex flex-col min-w-0">
+									<div className="flex items-center gap-1.5">
+										<span className="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100 truncate">
+											JGEC Alumni
+										</span>
+										<span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary dark:bg-primary/25 dark:text-blue-300 uppercase tracking-wider shrink-0">
+											Admin
+										</span>
+									</div>
+									<span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+										Govt. Engg. College
+									</span>
+								</div>
+							</div>
+
+							{!mobile ? (
+								<button
+									onClick={toggleCollapse}
+									title="Collapse Sidebar"
+									className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 ml-1"
+								>
+									<PanelLeftClose className="w-4 h-4" />
+								</button>
+							) : (
+								<button
+									onClick={() => setMobileOpen(false)}
+									className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+								>
+									<X className="w-5 h-5" />
+								</button>
+							)}
+						</div>
+					) : (
+						// Collapsed Header: Perfectly Centered Logo without horizontal squeezing
+						<div className="flex flex-col items-center justify-center py-2.5 px-2 gap-1.5">
+							<button
+								onClick={toggleCollapse}
+								title="Click to expand sidebar"
+								className="relative w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 flex items-center justify-center shadow-sm hover:scale-105 transition-transform"
+							>
+								<Image
+									src="/assets/Logo.webp"
+									alt="JGEC Alumni Logo"
+									width={34}
+									height={34}
+									className="object-contain w-full h-full"
+									priority
+								/>
+							</button>
+							<button
+								onClick={toggleCollapse}
+								title="Expand Sidebar"
+								className="p-1 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
+							>
+								<PanelLeft className="w-3.5 h-3.5" />
+							</button>
+						</div>
+					)}
+				</div>
+
+				{/* 2. Middle Navigation List: Scrollable, Stretches Full Middle Height */}
+				<div className="flex-1 min-h-0 overflow-y-auto px-2.5 py-3 space-y-4 no-scrollbar">
+
+					{/* Core Group */}
+					<div className="space-y-1">
+						{showFull && (
+							<div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+								Core Portal
+							</div>
+						)}
+						{mainNavItems.map((item) => {
+							const isAllowed = isPathAllowed(item.path);
+							const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path));
+							const Icon = item.icon;
+
+							if (!isAllowed) {
+								return (
+									<div
+										key={item.name}
+										title={!showFull ? `${item.name} (Restricted)` : "Access Restricted (Requires Permission)"}
+										onClick={() => toast.error(`Access restricted: You do not have permission to view ${item.name}.`)}
+										className={`group flex items-center ${
+											showFull ? "gap-3 px-2.5 py-2 justify-between" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all opacity-40 bg-slate-100/40 dark:bg-slate-800/20 text-slate-400 dark:text-slate-500 cursor-not-allowed select-none`}
+									>
+										<div className="flex items-center gap-3 min-w-0">
+											<div className="p-1.5 rounded-lg shrink-0 bg-slate-200/50 dark:bg-slate-800/50 text-slate-400">
+												<Icon className="w-4 h-4" />
+											</div>
+											{showFull && <span className="truncate">{item.name}</span>}
+										</div>
+										{showFull && <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400/80 ml-auto" />}
+									</div>
+								);
+							}
+
+							return (
+								<Link
+									key={item.name}
+									href={item.path}
+									onClick={() => mobile && setMobileOpen(false)}
+									title={!showFull ? item.name : undefined}
+									className={`group flex items-center ${showFull ? "gap-3 px-2.5 py-2" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 ${isActive
+											? item.activeColor
+											: "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
+										}`}
+								>
+									<div className={`p-1.5 rounded-lg shrink-0 transition-transform duration-200 ${item.bgColor} ${item.color} ${isActive ? "scale-105 shadow-sm" : "group-hover:scale-105"}`}>
+										<Icon className="w-4 h-4" />
+									</div>
+									{showFull && <span className="truncate">{item.name}</span>}
+								</Link>
+							);
+						})}
+					</div>
+
+					{/* Media Group */}
+					<div className="space-y-1">
+						{showFull ? (
+							<div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+								Media & Publications
+							</div>
+						) : (
+							<div className="h-px bg-slate-200 dark:bg-slate-800 my-2 mx-1" />
+						)}
+						{mediaNavItems.map((item) => {
+							const isAllowed = isPathAllowed(item.path);
+							const isActive = pathname.startsWith(item.path);
+							const Icon = item.icon;
+
+							if (!isAllowed) {
+								return (
+									<div
+										key={item.name}
+										title={!showFull ? `${item.name} (Restricted)` : "Access Restricted (Requires Permission)"}
+										onClick={() => toast.error(`Access restricted: You do not have permission to view ${item.name}.`)}
+										className={`group flex items-center ${
+											showFull ? "gap-3 px-2.5 py-2 justify-between" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all opacity-40 bg-slate-100/40 dark:bg-slate-800/20 text-slate-400 dark:text-slate-500 cursor-not-allowed select-none`}
+									>
+										<div className="flex items-center gap-3 min-w-0">
+											<div className="p-1.5 rounded-lg shrink-0 bg-slate-200/50 dark:bg-slate-800/50 text-slate-400">
+												<Icon className="w-4 h-4" />
+											</div>
+											{showFull && <span className="truncate">{item.name}</span>}
+										</div>
+										{showFull && <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400/80 ml-auto" />}
+									</div>
+								);
+							}
+
+							return (
+								<Link
+									key={item.name}
+									href={item.path}
+									onClick={() => mobile && setMobileOpen(false)}
+									title={!showFull ? item.name : undefined}
+									className={`group flex items-center ${showFull ? "gap-3 px-2.5 py-2" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 ${isActive
+											? item.activeColor
+											: "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
+										}`}
+								>
+									<div className={`p-1.5 rounded-lg shrink-0 transition-transform duration-200 ${item.bgColor} ${item.color} ${isActive ? "scale-105 shadow-sm" : "group-hover:scale-105"}`}>
+										<Icon className="w-4 h-4" />
+									</div>
+									{showFull && <span className="truncate">{item.name}</span>}
+								</Link>
+							);
+						})}
+					</div>
+
+					{/* Financials Group */}
+					<div className="space-y-1">
+						{showFull ? (
+							<div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+								Financial Accounting
+							</div>
+						) : (
+							<div className="h-px bg-slate-200 dark:bg-slate-800 my-2 mx-1" />
+						)}
+						{financeNavItems.map((item) => {
+							const isAllowed = isPathAllowed(item.path);
+							const isActive = pathname.startsWith(item.path);
+							const Icon = item.icon;
+
+							if (!isAllowed) {
+								return (
+									<div
+										key={item.name}
+										title={!showFull ? `${item.name} (Restricted)` : "Access Restricted (Requires Permission)"}
+										onClick={() => toast.error(`Access restricted: You do not have permission to view ${item.name}.`)}
+										className={`group flex items-center ${
+											showFull ? "gap-3 px-2.5 py-2 justify-between" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all opacity-40 bg-slate-100/40 dark:bg-slate-800/20 text-slate-400 dark:text-slate-500 cursor-not-allowed select-none`}
+									>
+										<div className="flex items-center gap-3 min-w-0">
+											<div className="p-1.5 rounded-lg shrink-0 bg-slate-200/50 dark:bg-slate-800/50 text-slate-400">
+												<Icon className="w-4 h-4" />
+											</div>
+											{showFull && <span className="truncate">{item.name}</span>}
+										</div>
+										{showFull && <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400/80 ml-auto" />}
+									</div>
+								);
+							}
+
+							return (
+								<Link
+									key={item.name}
+									href={item.path}
+									onClick={() => mobile && setMobileOpen(false)}
+									title={!showFull ? item.name : undefined}
+									className={`group flex items-center ${showFull ? "gap-3 px-2.5 py-2" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 ${isActive
+											? item.activeColor
+											: "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
+										}`}
+								>
+									<div className={`p-1.5 rounded-lg shrink-0 transition-transform duration-200 ${item.bgColor} ${item.color} ${isActive ? "scale-105 shadow-sm" : "group-hover:scale-105"}`}>
+										<Icon className="w-4 h-4" />
+									</div>
+									{showFull && <span className="truncate">{item.name}</span>}
+								</Link>
+							);
+						})}
+					</div>
+
+					{/* Documents Group */}
+					<div className="space-y-1">
+						{showFull ? (
+							<div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+								Archive & Records
+							</div>
+						) : (
+							<div className="h-px bg-slate-200 dark:bg-slate-800 my-2 mx-1" />
+						)}
+						<div>
+							<button
+								onClick={() => {
+									if (!showFull) {
+										setIsCollapsed(false);
+										setDocumentsOpen(true);
+									} else {
+										setDocumentsOpen(!documentsOpen);
+									}
+								}}
+								title={!showFull ? "Official Documents" : undefined}
+								className={`w-full group flex items-center ${showFull ? "justify-between px-2.5 py-2" : "justify-center p-2"
+									} rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 ${pathname.startsWith("/documents")
+										? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+										: "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+									}`}
+							>
+								<div className="flex items-center gap-3 min-w-0">
+									<div className="p-1.5 rounded-lg shrink-0 bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-300">
+										<Folder className="w-4 h-4" />
+									</div>
+									{showFull && <span className="truncate">Official Documents</span>}
+								</div>
+								{showFull && (
+									<ChevronDown
+										className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${documentsOpen ? "rotate-180" : ""
+											}`}
+									/>
+								)}
+							</button>
+
+							{/* Document Submenu */}
+							{documentsOpen && showFull && (
+								<div className="ml-5 mt-1 pl-3 border-l border-slate-200 dark:border-slate-800 space-y-1 py-1">
+									{documentSections.map((doc) => {
+										const isDocActive = pathname === doc.path;
+										const isDocAllowed = isPathAllowed(doc.path);
+
+										if (!isDocAllowed) {
+											return (
+												<div
+													key={doc.name}
+													title="Access Restricted"
+													onClick={() => toast.error(`Access restricted: You do not have permission to view ${doc.name}.`)}
+													className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs opacity-40 text-slate-400 cursor-not-allowed select-none"
+												>
+													<div className="flex items-center gap-2 min-w-0">
+														<div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+														<span className="truncate">{doc.name}</span>
+													</div>
+													<Lock className="w-3 h-3 text-slate-400 shrink-0" />
+												</div>
+											);
+										}
+
+										return (
+											<Link
+												key={doc.name}
+												href={doc.path}
+												onClick={() => mobile && setMobileOpen(false)}
+												className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors ${isDocActive
+														? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-300 font-semibold"
+														: "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/40"
+													}`}
+											>
+												<div className={`w-1.5 h-1.5 rounded-full ${isDocActive ? "bg-primary" : "bg-slate-300 dark:bg-slate-600"}`} />
+												<span className="truncate">{doc.name}</span>
+											</Link>
+										);
+									})}
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* System & Access Governance Group */}
+					<div className="space-y-1">
+						{showFull ? (
+							<div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+								System & Access
+							</div>
+						) : (
+							<div className="h-px bg-slate-200 dark:bg-slate-800 my-2 mx-1" />
+						)}
+						{systemNavItems.map((item) => {
+							const isAllowed = isPathAllowed(item.path);
+							const isActive = pathname.startsWith(item.path);
+							const Icon = item.icon;
+
+							if (!isAllowed) {
+								return (
+									<div
+										key={item.name}
+										title={!showFull ? `${item.name} (Restricted)` : "Access Restricted (Requires Permission)"}
+										onClick={() => toast.error(`Access restricted: You do not have permission to view ${item.name}.`)}
+										className={`group flex items-center ${
+											showFull ? "gap-3 px-2.5 py-2 justify-between" : "justify-center p-2"
+										} rounded-xl text-xs sm:text-sm font-medium transition-all opacity-40 bg-slate-100/40 dark:bg-slate-800/20 text-slate-400 dark:text-slate-500 cursor-not-allowed select-none`}
+									>
+										<div className="flex items-center gap-3 min-w-0">
+											<div className="p-1.5 rounded-lg shrink-0 bg-slate-200/50 dark:bg-slate-800/50 text-slate-400">
+												<Icon className="w-4 h-4" />
+											</div>
+											{showFull && <span className="truncate">{item.name}</span>}
+										</div>
+										{showFull && <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400/80 ml-auto" />}
+									</div>
+								);
+							}
+
+							return (
+								<Link
+									key={item.name}
+									href={item.path}
+									onClick={() => mobile && setMobileOpen(false)}
+									title={!showFull ? item.name : undefined}
+									className={`group flex items-center ${
+										showFull ? "gap-3 px-2.5 py-2" : "justify-center p-2"
+									} rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 ${
+										isActive
+											? item.activeColor
+											: "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
+									}`}
+								>
+									<div
+										className={`p-1.5 rounded-lg shrink-0 transition-transform duration-200 ${item.bgColor} ${item.color} ${
+											isActive ? "scale-105 shadow-sm" : "group-hover:scale-105"
+										}`}
+									>
+										<Icon className="w-4 h-4" />
+									</div>
+									{showFull && <span className="truncate">{item.name}</span>}
+								</Link>
+							);
+						})}
+					</div>
+
+				</div>
+
+				{/* 3. Footer: Permanently Pinned to Bottom (Zero Gap) */}
+				<div className="shrink-0 mt-auto border-t border-slate-200/90 dark:border-slate-800/90 bg-slate-50/80 dark:bg-slate-900/80 p-3">
+					<div className={`flex items-center ${showFull ? "justify-between gap-2" : "justify-center"}`}>
+						{showFull && (
+							<div className="flex items-center gap-2.5 min-w-0 pr-1">
+								<div
+									suppressHydrationWarning
+									className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border ${
+										isMounted && currentUser?.role === "SUPER_ADMIN"
+											? "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+											: "bg-primary/15 text-primary dark:bg-primary/25 dark:text-blue-300 border-primary/20"
+									}`}
+								>
+									{isMounted && currentUser?.name
+										? currentUser.name
+												.trim()
+												.split(" ")
+												.map((n: string) => n[0])
+												.join("")
+												.toUpperCase()
+												.slice(0, 2)
+										: "AD"}
+								</div>
+								<div className="flex flex-col min-w-0" suppressHydrationWarning>
+									<div className="flex items-center gap-1.5">
+										<span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate" suppressHydrationWarning>
+											{isMounted && currentUser?.name ? currentUser.name : "Council Admin"}
+										</span>
+										{isMounted && currentUser?.role === "SUPER_ADMIN" && (
+											<span className="text-[9px] font-bold px-1 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 uppercase tracking-tight shrink-0">
+												SUPER
+											</span>
+										)}
+									</div>
+									<span className="text-[10px] text-slate-500 dark:text-slate-400 truncate" suppressHydrationWarning>
+										{isMounted && currentUser?.email ? currentUser.email : "admin@jgecalumni.in"}
+									</span>
+								</div>
+							</div>
+						)}
+
+						<button
+							onClick={handleLogout}
+							disabled={isLoading}
+							title="Sign Out of Portal"
+							className="p-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors focus:outline-none shrink-0"
+							aria-label="Sign Out"
+						>
+							{isLoading ? (
+								<Loader2 className="w-4 h-4 animate-spin" />
+							) : (
+								<LogOut className="w-4 h-4" />
+							)}
+						</button>
+					</div>
+				</div>
+
+			</div>
+		);
 	};
 
-	const scrollRight = () => {
-		if (scrollContainerRef.current) {
-			scrollContainerRef.current.scrollBy({ left: 250, behavior: "smooth" });
+	const currentSidebarWidth = isCollapsed ? COLLAPSED_WIDTH : sidebarWidth;
+
+	const renderMainContent = () => {
+		if (isMounted && currentUser && !isPathAllowed(pathname)) {
+			return (
+				<div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg mx-auto my-10">
+					<div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 flex items-center justify-center mb-3">
+						<Lock className="w-7 h-7" />
+					</div>
+					<h2 className="text-xl font-bold text-slate-900 dark:text-white">
+						Access Restricted
+					</h2>
+					<p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+						Your administrative credentials do not grant authorization for this path (<code className="font-mono text-red-500 font-semibold">{pathname}</code>). Please contact a Super Administrator to adjust your permissions.
+					</p>
+					<button
+						onClick={() => {
+							const fallback =
+								currentUser.allowedPaths?.find((p) => p !== "*" && p !== pathname) || "/";
+							window.location.href = fallback;
+						}}
+						className="mt-6 px-4 py-2 text-xs font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm transition-colors"
+					>
+						Return to Permitted Section
+					</button>
+				</div>
+			);
 		}
+		return children;
 	};
 
 	return (
-		<SidebarProvider>
-			{/* Mobile Sidebar (Hidden on medium/large screens) */}
-			<div className="md:hidden">
-				<Sidebar collapsible="icon" className="border-r border-white/20 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-2xl shadow-[8px_0_30px_-15px_rgba(0,0,0,0.1)]">
-					<SidebarContent>
-						<SidebarGroup className="group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:group-hover:p-2 transition-all duration-300">
-							<SidebarGroupLabel className="my-6 h-auto py-2 group-data-[collapsible=icon]:!mt-6 group-data-[collapsible=icon]:!opacity-100 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:group-hover:px-2 transition-all duration-300">
-								<div className="flex items-center justify-between group w-full overflow-hidden whitespace-nowrap">
-									<div className="flex gap-4 items-center cursor-pointer">
-										<div className="relative overflow-hidden rounded-2xl shadow-lg ring-1 ring-white/30 dark:ring-white/10 transition-all duration-500 shrink-0 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:group-hover:w-12 group-data-[collapsible=icon]:group-hover:h-12 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-md">
-											<Image
-												src="/assets/Logo.webp"
-												height={60}
-												width={60}
-												alt="Jgec Alumni Logo"
-												className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 drop-shadow-md"
-											/>
-										</div>
-										<div className="flex flex-col truncate group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 transition-opacity duration-300">
-											<span className="text-xl font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent truncate drop-shadow-sm">
-												JGEC Alumni
-											</span>
-											<span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Admin Portal</span>
-										</div>
-									</div>
-									<MobileSidebarCloseButton />
-								</div>
-							</SidebarGroupLabel>
-							<SidebarGroupContent className="px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:group-hover:px-3 transition-all duration-300">
-								<ScrollArea type="hover" className="h-[calc(100vh-120px)] w-full pb-4">
-									<SidebarMenu className="space-y-2 mt-2">
-										{navItems.map((item) => {
-											const isActive = pathname === item.path;
-											return (
-												<SidebarMenuItem key={item.name}>
-													<SidebarMenuButton asChild className="h-auto">
-														<Link
-															href={item.path}
-															className={`flex items-center gap-3.5 overflow-hidden whitespace-nowrap rounded-2xl px-3 py-3 transition-all duration-300 group hover:translate-x-1 ${isActive
-																? "bg-white/60 dark:bg-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.04)] backdrop-blur-md ring-1 ring-white/40 dark:ring-white/10"
-																: "hover:bg-white/40 dark:hover:bg-white/5 hover:shadow-sm"
-																}`}>
-															<span className={`flex items-center justify-center shrink-0 w-9 h-9 rounded-xl transition-all duration-500 shadow-sm bg-gradient-to-br ${item.gradient} text-white ${isActive ? `scale-110 shadow-lg shadow-${item.gradient.split('-')[1]}-500/30` : "group-hover:scale-110 group-hover:shadow-md"}`}>
-																{item.icon}
-															</span>
-															<span className={`flex-1 truncate font-medium transition-all duration-300 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
-																{item.name}
-															</span>
-															{isActive && <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${item.gradient} mr-2 shrink-0 shadow-sm`} />}
-														</Link>
-													</SidebarMenuButton>
-												</SidebarMenuItem>
-											);
-										})}
+		<div className="min-h-screen w-full bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
-										{/* Mobile Documents Dropdown */}
-										<SidebarMenuItem className="mt-2 pb-6">
-											<DropdownMenu>
-												<DropdownMenuTrigger className={`flex w-full items-center gap-3.5 overflow-hidden whitespace-nowrap rounded-2xl px-3 py-3 transition-all duration-300 group focus:outline-none hover:translate-x-1 ${pathname.includes('/documents') ? "bg-white/60 dark:bg-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md ring-1 ring-white/40 dark:ring-white/10" : "hover:bg-white/40 dark:hover:bg-white/5 hover:shadow-sm"}`}>
-													<span className={`flex items-center justify-center shrink-0 w-9 h-9 rounded-xl transition-all duration-500 shadow-sm bg-gradient-to-br from-indigo-500 to-violet-500 text-white ${pathname.includes('/documents') ? "scale-110 shadow-lg shadow-indigo-500/30" : "group-hover:scale-110 group-hover:shadow-md"}`}>
-														<Folder size={18} />
-													</span>
-													<span className={`flex-1 text-left truncate font-medium transition-all duration-300 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 ${pathname.includes('/documents') ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
-														Documents
-													</span>
-													<ChevronRight size={16} className={`shrink-0 transition-all duration-300 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:group-hover:opacity-100 ${pathname.includes('/documents') ? 'text-indigo-500 rotate-90' : 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`} />
-												</DropdownMenuTrigger>
-												<DropdownMenuContent className="w-56 p-2 border border-white/20 dark:border-white/10 shadow-2xl rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-xl" align="start" sideOffset={12}>
-													{documentSections.map((doc) => {
-														const isDocActive = pathname === doc.path;
-														return (
-															<DropdownMenuItem
-																key={doc.name}
-																asChild
-																className={`rounded-xl cursor-pointer mb-1 last:mb-0 transition-all duration-200 ${isDocActive ? "bg-white/80 dark:bg-white/10 shadow-sm" : "hover:bg-white/50 dark:hover:bg-white/5"}`}
-															>
-																<Link
-																	href={doc.path}
-																	className="flex items-center gap-3 px-3 py-2.5">
-																	<div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${isDocActive ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-slate-300 dark:bg-slate-600"}`} />
-																	<span className={`font-medium ${isDocActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"}`}>{doc.name}</span>
-																</Link>
-															</DropdownMenuItem>
-														);
-													})}
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</SidebarMenuItem>
-									</SidebarMenu>
-								</ScrollArea>
-							</SidebarGroupContent>
-						</SidebarGroup>
-					</SidebarContent>
-				</Sidebar>
-			</div>
+			{/* Desktop Truly Fixed Sidebar (position: fixed inset-y-0 left-0) */}
+			<aside
+				style={{ width: `${currentSidebarWidth}px` }}
+				className="fixed inset-y-0 left-0 z-30 hidden md:flex flex-col shrink-0 border-r border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 transition-[width] duration-150 ease-out h-screen overflow-hidden"
+			>
+				{renderSidebarContent(false)}
 
-			<div className="flex-1 flex flex-col min-h-screen bg-slate-50/50 dark:bg-[#0a0a0a] text-foreground relative overflow-hidden w-full">
-				{/* Decorative background blobs */}
-				<div className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] opacity-60 translate-x-1/3 -translate-y-1/4 pointer-events-none" />
-				<div className="absolute bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] opacity-60 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+				{/* Drag Resize Handle */}
+				{!isCollapsed && (
+					<div
+						onMouseDown={startResizing}
+						onDoubleClick={resetWidth}
+						title="Drag to resize sidebar • Double-click to reset (260px)"
+						className={`absolute -right-1.5 top-0 bottom-0 w-3 cursor-col-resize z-40 group flex items-center justify-center transition-colors ${isResizing ? "bg-primary/25" : "hover:bg-primary/10"
+							}`}
+					>
+						<div
+							className={`w-0.5 h-10 rounded-full transition-colors ${isResizing ? "bg-primary" : "bg-slate-300 dark:bg-slate-700 group-hover:bg-primary"
+								}`}
+						/>
+					</div>
+				)}
+			</aside>
 
-				{/* Mobile Header (Hidden on medium/large screens) */}
-				<div className="p-4 pb-0 sticky top-0 z-30 md:hidden">
-					<header className="flex h-16 w-full items-center justify-between rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-black/40 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-300">
-						<div className="flex items-center gap-4">
-							<SidebarTrigger className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors hover:bg-white/50 dark:hover:bg-white/10 p-2 rounded-xl" />
-						</div>
-
-						<div className="flex items-center gap-3">
-							<ThemeToggle />
-							<button
-								className="flex items-center justify-center gap-2 rounded-xl bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/10 p-2 text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-500/10 dark:hover:text-red-400 focus:outline-none backdrop-blur-md"
-								onClick={handleLogout}
-								disabled={isLoading}>
-								{!isLoading ? (
-									<LogOut className="w-5 h-5" />
-								) : (
-									<Loader2 className="animate-spin w-5 h-5" />
-								)}
-							</button>
-						</div>
-					</header>
-				</div>
-
-				{/* Desktop Top Navbar (Hidden on small screens) */}
-				<div className="hidden md:block sticky top-0 z-40 w-full border-b border-white/20 dark:border-white/10 bg-white/70 dark:bg-black/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl">
-					<div className="flex h-16 items-center px-6">
-						<div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-800 shrink-0">
-							<div className="flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/40 dark:border-white/10">
-								<Image
-									src="/assets/Logo.webp"
-									height={32}
-									width={32}
-									alt="Jgec Alumni Logo"
-									className="object-cover drop-shadow-sm transition-transform duration-500 hover:scale-110"
-								/>
-							</div>
-							<div className="flex flex-col">
-								<span className="text-sm font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent drop-shadow-sm leading-tight">
-									JGEC Alumni
-								</span>
-								<span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Admin Portal</span>
-							</div>
-						</div>
-
-						{/* Navigation Items with Scroll Buttons */}
-						<div className="flex-1 flex items-center overflow-hidden ml-4 relative group/nav">
-							{canScrollLeft && (
-								<div className="absolute left-0 top-0 bottom-0 flex items-center bg-gradient-to-r from-white/90 via-white/80 to-transparent dark:from-black/90 dark:via-black/80 dark:to-transparent z-10 pr-6 pl-1 animate-in fade-in duration-300">
-									<button 
-										onClick={scrollLeft}
-										className="p-1.5 rounded-full bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:scale-105 transition-all focus:outline-none"
-									>
-										<ChevronLeft size={16} />
-									</button>
-								</div>
-							)}
-							
-							<div 
-								ref={scrollContainerRef}
-								onScroll={checkScroll}
-								className="flex w-full space-x-2 p-1 overflow-x-auto no-scrollbar scroll-smooth"
-								style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-							>
-								{navItems.map((item) => {
-									const isActive = pathname === item.path;
-									return (
-										<Link
-											key={item.name}
-											href={item.path}
-											className={`shrink-0 group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300 ${
-												isActive
-													? "bg-white/80 dark:bg-white/10 shadow-sm ring-1 ring-black/5 dark:ring-white/10 text-slate-900 dark:text-white"
-													: "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-											}`}
-										>
-											<span className={`flex items-center justify-center shrink-0 w-6 h-6 rounded-lg transition-all duration-500 bg-gradient-to-br ${item.gradient} text-white shadow-sm ${isActive ? "scale-110 shadow-md" : "group-hover:scale-110"}`}>
-												{item.icon}
-											</span>
-											<span>{item.name}</span>
-										</Link>
-									);
-								})}
-
-								{/* Documents Dropdown */}
-								<DropdownMenu>
-									<DropdownMenuTrigger className={`shrink-0 group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300 focus:outline-none ${
-										pathname.includes('/documents')
-											? "bg-white/80 dark:bg-white/10 shadow-sm ring-1 ring-black/5 dark:ring-white/10 text-slate-900 dark:text-white"
-											: "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-									}`}>
-										<span className={`flex items-center justify-center shrink-0 w-6 h-6 rounded-lg transition-all duration-500 bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm ${pathname.includes('/documents') ? "scale-110 shadow-md" : "group-hover:scale-110"}`}>
-											<Folder size={16} />
-										</span>
-										<span>Documents</span>
-										<ChevronDown size={14} className={`ml-1 opacity-50 transition-transform duration-300 group-data-[state=open]:rotate-180 ${pathname.includes('/documents') ? 'text-indigo-500' : ''}`} />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end" className="w-56 p-2 border border-white/20 dark:border-white/10 shadow-2xl rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-xl" sideOffset={8}>
-										{documentSections.map((doc) => {
-											const isDocActive = pathname === doc.path;
-											return (
-												<DropdownMenuItem
-													key={doc.name}
-													asChild
-													className={`rounded-xl cursor-pointer mb-1 last:mb-0 transition-all duration-200 ${isDocActive ? "bg-white/80 dark:bg-white/10 shadow-sm" : "hover:bg-white/50 dark:hover:bg-white/5"}`}
-												>
-													<Link href={doc.path} className="flex items-center gap-3 px-3 py-2.5">
-														<div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${isDocActive ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-slate-300 dark:bg-slate-600"}`} />
-														<span className={`font-medium ${isDocActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"}`}>{doc.name}</span>
-													</Link>
-												</DropdownMenuItem>
-											);
-										})}
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-
-							{canScrollRight && (
-								<div className="absolute right-0 top-0 bottom-0 flex items-center bg-gradient-to-l from-white/90 via-white/80 to-transparent dark:from-black/90 dark:via-black/80 dark:to-transparent z-10 pl-6 pr-1 animate-in fade-in duration-300">
-									<button 
-										onClick={scrollRight}
-										className="p-1.5 rounded-full bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:scale-105 transition-all focus:outline-none"
-									>
-										<ChevronRight size={16} />
-									</button>
-								</div>
-							)}
-						</div>
-
-						<div className="flex items-center gap-3 ml-4 shrink-0 border-l border-slate-200 dark:border-slate-800 pl-4">
-							<ThemeToggle />
-							<button
-								className="flex items-center justify-center gap-2 rounded-xl bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/10 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:border-red-500/30 focus:outline-none disabled:opacity-50 group hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 backdrop-blur-md"
-								onClick={handleLogout}
-								disabled={isLoading}
-								title="Sign Out"
-							>
-								<span>Sign Out</span>
-								{!isLoading ? (
-									<LogOut className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-								) : (
-									<Loader2 className="w-4 h-4 animate-spin" />
-								)}
-							</button>
-						</div>
+			{/* Mobile Drawer */}
+			{mobileOpen && (
+				<div className="fixed inset-0 z-50 md:hidden flex">
+					<div
+						onClick={() => setMobileOpen(false)}
+						className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+					/>
+					<div className="relative w-72 max-w-[85vw] h-full z-10 shadow-2xl">
+						{renderSidebarContent(true)}
 					</div>
 				</div>
+			)}
 
-				{/* Main Content Area */}
-				<main className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col z-10 w-full">
-					<div className="mx-auto w-full max-w-7xl flex-1 animate-in fade-in slide-in-from-bottom-8 duration-700">
-						{children}
+			{/* Main Content Area: Offset by exactly the fixed sidebar width on desktop */}
+			<div
+				style={{ marginLeft: `${currentSidebarWidth}px` }}
+				className="hidden md:flex flex-col min-h-screen transition-[margin-left] duration-150 ease-out"
+			>
+				{/* Top Command Bar */}
+				<header className="sticky top-0 z-20 flex h-14 sm:h-16 items-center justify-between border-b border-slate-200/90 dark:border-slate-800/90 bg-white/90 dark:bg-slate-900/90 px-4 sm:px-6 backdrop-blur-md transition-colors shrink-0">
+
+					{/* Left: Section Title & Breadcrumb */}
+					<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+								Console
+							</span>
+							<span className="text-xs text-slate-300 dark:text-slate-600">/</span>
+							<h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+								{getPageTitle()}
+							</h1>
+						</div>
 					</div>
+
+					{/* Right: Sync Status, Public Site Link, Theme Switcher */}
+					<div className="flex items-center gap-3 sm:gap-4">
+						<div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+							<span className="relative flex h-2 w-2">
+								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+								<span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+							</span>
+							<span>Online</span>
+						</div>
+
+						<a
+							href="https://jgecalumni.in"
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800 shadow-sm"
+						>
+							<span>Public Website</span>
+							<ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+						</a>
+
+						<ThemeToggle />
+					</div>
+				</header>
+
+				{/* Page Content Viewport */}
+				<main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+					{renderMainContent()}
 				</main>
+
+				{/* Institutional Footer */}
+				<footer className="border-t border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 py-4 text-center sm:text-left text-xs text-slate-500 dark:text-slate-400 max-w-7xl w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+					<p suppressHydrationWarning>
+						© {new Date().getFullYear()} Jalpaiguri Government Engineering College Alumni Association. All rights reserved.
+					</p>
+					<p className="text-[11px] text-slate-400">
+						Restricted Admin Console • Estd. 1961
+					</p>
+				</footer>
 			</div>
-		</SidebarProvider>
+
+			{/* Mobile Viewport Layout (< 768px) */}
+			<div className="md:hidden flex flex-col min-h-screen w-full">
+				<header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200/90 dark:border-slate-800/90 bg-white/90 dark:bg-slate-900/90 px-4 backdrop-blur-md shrink-0">
+					<div className="flex items-center gap-3">
+						<button
+							onClick={() => setMobileOpen(true)}
+							className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+							aria-label="Open navigation menu"
+						>
+							<Menu className="w-5 h-5" />
+						</button>
+						<h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+							{getPageTitle()}
+						</h1>
+					</div>
+					<ThemeToggle />
+				</header>
+
+				<main className="flex-1 p-4 w-full">
+					{renderMainContent()}
+				</main>
+
+				<footer className="border-t border-slate-200/80 dark:border-slate-800/80 p-4 text-center text-xs text-slate-500 shrink-0">
+					<p suppressHydrationWarning>© {new Date().getFullYear()} JGEC Alumni Association</p>
+				</footer>
+			</div>
+		</div>
 	);
 }

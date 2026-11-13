@@ -72,7 +72,7 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
 		httpOnly: true,
 		secure: true,
 		sameSite: "none",
-		domain: ".jgecalumni.in",
+		// domain: ".jgecalumni.in",
 	});
 
 	response.status(200).json({
@@ -271,19 +271,35 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 	});
 });
 export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
-	res.clearCookie("tokenAdmin", {
+
+	const { refreshToken } = req.cookies;
+	if (refreshToken) {
+		await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+	}
+
+	const isProd = process.env.NODE_ENV === "production";
+	const clearOptions: any = {
 		httpOnly: true,
-		secure: true,
-		sameSite: "none",
-		domain: ".jgecalumni.in",
-	});
-	res.clearCookie("tokenMoney", {
-		httpOnly: true,
-		secure: true,
-		sameSite: "none",
-		domain: ".jgecalumni.in",
-	});
-	res.status(200).json({
+		secure: isProd,
+		sameSite: isProd ? "none" : "lax",
+		path: "/",
+	};
+
+	res.clearCookie('refreshToken', clearOptions);
+	res.clearCookie('accessToken', clearOptions);
+	res.clearCookie("tokenAdmin", clearOptions);
+	res.clearCookie("tokenMoney", clearOptions);
+	res.clearCookie("user_session", { path: "/" });
+
+	if (isProd) {
+		const prodClear = { ...clearOptions, domain: ".jgecalumni.in" };
+		res.clearCookie('refreshToken', prodClear);
+		res.clearCookie('accessToken', prodClear);
+		res.clearCookie("tokenAdmin", prodClear);
+		res.clearCookie("tokenMoney", prodClear);
+		res.clearCookie("user_session", { ...prodClear, httpOnly: false });
+	}
+	return res.status(200).json({
 		message: "Logout successful",
 		error: false,
 		success: true,
@@ -447,3 +463,115 @@ export const updateMemeber = asyncHandler(
 		});
 	}
 );
+
+
+export const login = async (req: any, res: any) => {
+	try {
+		const { email, password } = req.body;
+		if (!email || !password) {
+			return res.status(400).json({ success: false, message: 'Email and password are required' });
+		}
+
+		let user = await prisma.user.findUnique({ where: { email } });
+
+		// Fallback for master admin credentials if not yet created in User table
+		if (!user && email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+			const hashedPassword = await bcrypt.hash(password, 10);
+			user = await prisma.user.upsert({
+				where: { email },
+				update: { role: "SUPER_ADMIN", allowedPaths: ["*"] },
+				create: {
+					email,
+					password: hashedPassword,
+					name: "Council Super Admin",
+					role: "SUPER_ADMIN",
+					allowedPaths: ["*"],
+					last_login_at: new Date()
+				}
+			});
+		}
+
+		if (!user || !(await bcrypt.compare(password, user.password))) {
+			return res.status(401).json({ success: false, message: 'Invalid credentials' });
+		}
+
+		const accessSecret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || "jgec_alumni_secret";
+		const refreshSecret = process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || "jgec_alumni_refresh_secret";
+
+		const accessToken = jwt.sign(
+			{ userId: user.id, role: user.role, allowedPaths: user.allowedPaths },
+			accessSecret,
+			{ expiresIn: '15m' }
+		);
+		const refreshToken = jwt.sign(
+			{ userId: user.id },
+			refreshSecret,
+			{ expiresIn: '7d' }
+		);
+
+		await Promise.all([
+			prisma.user.update({
+				where: { id: user.id },
+				data: { last_login_at: new Date() },
+			}),
+			prisma.refreshToken.create({
+				data: {
+					token: refreshToken,
+					userId: user.id,
+					expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+				},
+			})
+		]);
+
+		const isProd = process.env.NODE_ENV === "production";
+		const cookieOptions: any = {
+			httpOnly: true,
+			secure: isProd,
+			sameSite: isProd ? "none" : "lax",
+			path: "/",
+		};
+
+		res.cookie('refreshToken', refreshToken, {
+			...cookieOptions,
+			maxAge: 7 * 24 * 60 * 60 * 1000,
+		});
+
+		res.cookie('accessToken', accessToken, {
+			...cookieOptions,
+			maxAge: 15 * 60 * 1000, // 15 minutes
+		});
+
+		res.cookie('user_session', JSON.stringify({
+			id: user.id,
+			email: user.email,
+			name: user.name,
+			role: user.role,
+			allowedPaths: user.allowedPaths,
+		}), {
+			httpOnly: false,
+			secure: isProd,
+			sameSite: isProd ? "none" : "lax",
+			path: "/",
+			maxAge: 7 * 24 * 60 * 60 * 1000,
+		});
+
+		return res.status(200).json({
+			success: true,
+			message: "Login successful",
+			role: user.role,
+			user: {
+				id: user.id,
+				email: user.email,
+				name: user.name,
+				role: user.role,
+				allowedPaths: user.allowedPaths,
+			},
+		});
+	} catch (error: any) {
+		console.error(error);
+		return res.status(500).json({
+			success: false,
+			message: error.message || "Internal server error",
+		});
+	}
+};

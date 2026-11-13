@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Delete, Eye, FilePenLine, PlusIcon, Trash2 } from "lucide-react";
+import { PlusIcon, ScrollText, Search } from "lucide-react";
 import DocumentCard from "../Documents/DocumentCard";
 import Loading from "@/app/loading";
 import toast from "react-hot-toast";
-import Link from "next/link";
 import {
 	useDeleteAgmMomDocsMutation,
 	useGetAllAgmMomDocsQuery,
@@ -15,18 +13,20 @@ import { ModalDocumentsAgmMom } from "../Modals/ModalDocuments";
 
 const AgmMom = () => {
 	const [openModal, setOpenModal] = useState(false);
-	const { data, isLoading, isError, error, refetch } =
-		useGetAllAgmMomDocsQuery({});
+	const [searchQuery, setSearchQuery] = useState("");
+	const { data, isLoading, refetch } = useGetAllAgmMomDocsQuery({});
 	const [
 		deleteAgmMom,
-		{ isLoading: deleteLoading, isError: deleteIsError, error: deleteError },
+		{ isLoading: deleteLoading },
 	] = useDeleteAgmMomDocsMutation();
 	const [editAgmMomDocs, setEditAgmMomDocs] = useState<any>();
 
 	if (isLoading) {
 		return <Loading />;
 	}
+
 	const handelDelete = async (id: string) => {
+		if (!window.confirm("Permanently delete this AGM Minutes of Meeting record?")) return;
 		const res = await deleteAgmMom(id);
 		if (res?.data?.success) {
 			toast.success("Document deleted successfully");
@@ -34,45 +34,95 @@ const AgmMom = () => {
 		}
 	};
 
+	const docs = (data?.response || []).filter((item: any) =>
+		item.title.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
 	return (
-		<>
-			<div className="flex justify-end">
-				<Button
-					className="bg-primary flex items-center justify-center gap-1.5 p-2.5 rounded-md text-primary-foreground hover:bg-primary/90 px-4 text-sm transition-colors shadow-sm"
-					onClick={() => setOpenModal(true)}>
-					<PlusIcon
-						className="font-bold"
-						size={16}
-					/>
-					<div>Add Docs</div>
-				</Button>
-			</div>
-			<div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-				{data?.response?.length > 0 ? (
-					<>
-						{data?.response.map((item: any) => (
-							<DocumentCard
-								key={item.id || item.title}
-								item={item}
-								onEdit={setEditAgmMomDocs}
-								onDelete={handelDelete}
-								isDeleting={deleteLoading}
-							/>
-						))}
-					</>
-				) : (
-					<div className="col-span-full py-16 flex flex-col items-center justify-center bg-card rounded-2xl border border-dashed border-border text-muted-foreground shadow-sm">
-						<div className="bg-indigo-100 dark:bg-indigo-900/20 p-4 rounded-full mb-4 text-indigo-500">
-							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+		<div className="w-full space-y-6">
+			{/* Command Header */}
+			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+				<div className="space-y-1">
+					<div className="flex items-center gap-3">
+						<div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+							<ScrollText className="h-5 w-5" />
 						</div>
-						<p className="font-medium text-foreground">No documents found</p>
-						<p className="text-sm mt-1">Upload a new document to get started.</p>
+						<div>
+							<h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+								AGM Minutes of Meeting (MOM)
+							</h1>
+							<p className="text-sm text-slate-500 dark:text-slate-400">
+								Annual General Meeting proceedings, resolutions, committee appointments, and transcripts.
+							</p>
+						</div>
 					</div>
-				)}
+				</div>
+
+				<button
+					onClick={() => {
+						setEditAgmMomDocs(null);
+						setOpenModal(true);
+					}}
+					className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/95 rounded-xl transition-all shadow-sm active:scale-95"
+				>
+					<PlusIcon className="h-4 w-4" />
+					<span>Upload AGM Minutes</span>
+				</button>
 			</div>
+
+			{/* Main Card */}
+			<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+				{/* Toolbar */}
+				<div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+					<div className="relative flex-1 max-w-md">
+						<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+						<input
+							type="text"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="Search AGM minutes by year or agenda..."
+							className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+						/>
+					</div>
+
+					<div className="text-xs text-slate-500 dark:text-slate-400">
+						Total Records: <strong className="text-slate-900 dark:text-slate-100">{docs.length}</strong>
+					</div>
+				</div>
+
+				{/* Grid */}
+				<div className="p-4 sm:p-6">
+					{docs.length > 0 ? (
+						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+							{docs.map((item: any) => (
+								<DocumentCard
+									key={item.id || item.title}
+									item={item}
+									onEdit={setEditAgmMomDocs}
+									onDelete={handelDelete}
+									isDeleting={deleteLoading}
+								/>
+							))}
+						</div>
+					) : (
+						<div className="py-16 text-center text-slate-500">
+							<div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+								<div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
+									<ScrollText className="h-6 w-6" />
+								</div>
+								<p className="font-semibold text-slate-900 dark:text-slate-100">No AGM minutes filed</p>
+								<p className="text-xs text-slate-500 mt-1">
+									Upload ratified annual general meeting minutes or secretarial reports.
+								</p>
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+
 			{(openModal || !!editAgmMomDocs) && (
 				<ModalDocumentsAgmMom
-					open={openModal || editAgmMomDocs}
+					open={openModal || !!editAgmMomDocs}
 					closed={() => {
 						setOpenModal(false);
 						setEditAgmMomDocs(null);
@@ -81,7 +131,7 @@ const AgmMom = () => {
 					data={editAgmMomDocs}
 				/>
 			)}
-		</>
+		</div>
 	);
 };
 

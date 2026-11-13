@@ -18,6 +18,7 @@ import ReceiptRoute from "./router/receipt.route";
 import ContributionRoute from "./router/contribution.route";
 import Media_pressRoute from "./router/media_press.route";
 import SettingsRoute from "./router/settings.route";
+import UserRoute from "./router/user.route"
 
 import { allCounts } from "./controller/count.controller";
 import authentication from "./middleware/authentication";
@@ -27,39 +28,40 @@ import { cacheMiddleware } from "./middleware/redisCache";
 import { clearCacheMiddleware } from "./middleware/clearCache";
 import { setupSwagger } from "./utils/swagger";
 
+
 // Connect to Redis
 connectRedis();
 
 // configure middlewares
 app.use(cookieParser());
 app.use(
-	"/public",
-	cors({
-		origin: [
-			process.env.FORNTEND_URI_DEV as string,
-			process.env.FORNTEND_URI_PROD as string,
-			process.env.FORNTEND_URI_MAIN as string,
-			process.env.FORNTEND_URI_MAIN_TWO as string,
-			process.env.FORNTEND_URI_ADMIN_DEV as string,
-		],
-	}),
-	express.static(path.join(process.cwd(), "public"))
+    "/public",
+    cors({
+        origin: [
+            process.env.FORNTEND_URI_DEV as string,
+            process.env.FORNTEND_URI_PROD as string,
+            process.env.FORNTEND_URI_MAIN as string,
+            process.env.FORNTEND_URI_MAIN_TWO as string,
+            process.env.FORNTEND_URI_ADMIN_DEV as string,
+        ],
+    }),
+    express.static(path.join(process.cwd(), "public"))
 );
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(
-	cors({
-		origin: [
-			process.env.FORNTEND_URI_DEV as string,
-			process.env.FORNTEND_URI_PROD as string,
-			process.env.FORNTEND_URI_MAIN as string,
-			process.env.FORNTEND_URI_MAIN_TWO as string,
-			process.env.FORNTEND_URI_ADMIN_DEV as string,
-		],
-		methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-		credentials: true,
-	})
+    cors({
+        origin: [
+            process.env.FORNTEND_URI_DEV as string,
+            process.env.FORNTEND_URI_PROD as string,
+            process.env.FORNTEND_URI_MAIN as string,
+            process.env.FORNTEND_URI_MAIN_TWO as string,
+            process.env.FORNTEND_URI_ADMIN_DEV as string,
+        ],
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        credentials: true,
+    })
 );
 
 app.use(cacheMiddleware(300));
@@ -69,7 +71,7 @@ setupSwagger(app);
 
 // declare routes
 app.get("/", (req, res) => {
-	res.send("Hello World!");
+    res.send("Hello World!");
 });
 
 /**
@@ -262,17 +264,17 @@ app.get("/api/health", (req, res) => {
                 <div class="details">
                     <div class="details-label">Last Checked</div>
                     <div class="details-time">
-                        ${new Date().toLocaleString('en-IN', { 
-                            timeZone: 'Asia/Kolkata', 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit', 
-                            second: '2-digit',
-                            timeZoneName: 'short'
-                        })}
+                        ${new Date().toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+        })}
                     </div>
                 </div>
             </div>
@@ -281,9 +283,9 @@ app.get("/api/health", (req, res) => {
         `;
         return res.status(200).send(html);
     }
-    
+
     // Return standard JSON for programmatic API clients
-	res.status(200).json({ status: "UP", timestamp: new Date() });
+    res.status(200).json({ status: "UP", timestamp: new Date() });
 });
 
 // routes
@@ -298,8 +300,9 @@ app.use("/v1/api/receipt", ReceiptRoute);
 app.use("/v1/api/contributions", ContributionRoute);
 app.use("/v1/api/media_press", Media_pressRoute);
 app.use("/v1/api/settings", SettingsRoute);
+app.use("/v1/api/users", UserRoute);
 
 const server = app.listen(port, () => console.log("🚀[Server]: listening on port " + port));
-server.timeout = 600000; 
+server.timeout = 600000;
 server.keepAliveTimeout = 610000;
 server.headersTimeout = 620000;

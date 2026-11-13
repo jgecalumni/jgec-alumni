@@ -20,31 +20,30 @@ interface DashboardChartProps {
   counts: {
     members?: number;
     scholarships?: number;
+    scholarshipApplications?: number;
     notices?: number;
     gallery?: number;
     events?: number;
   } | undefined;
 }
 
-const COLORS = ["#0ea5e9", "#6366f1", "#f59e0b", "#10b981", "#f43f5e"];
+const COLORS = ["#3b82f6", "#10b981", "#6366f1", "#f59e0b", "#06b6d4"];
 
 const CustomTooltip = ({ active, payload, label, isDark }: any) => {
   if (active && payload && payload.length) {
     return (
       <div
+        className="rounded-xl p-3 border shadow-lg backdrop-blur-md transition-colors"
         style={{
-          backgroundColor: isDark ? "#1f2937" : "#ffffff",
-          border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
-          borderRadius: "0.75rem",
-          padding: "10px 14px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          backgroundColor: isDark ? "#0f172a" : "#ffffff",
+          borderColor: isDark ? "#1e293b" : "#e2e8f0",
         }}
       >
-        <p style={{ color: isDark ? "#9ca3af" : "#6b7280", fontSize: 11, marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
           {label}
         </p>
-        <p style={{ color: isDark ? "#f9fafb" : "#111827", fontSize: 16, fontWeight: 700 }}>
-          {payload[0].value}
+        <p className="text-base font-bold text-slate-900 dark:text-white">
+          {payload[0].value.toLocaleString()} <span className="text-xs font-normal text-slate-500">records</span>
         </p>
       </div>
     );
@@ -56,19 +55,17 @@ const CustomPieTooltip = ({ active, payload, isDark }: any) => {
   if (active && payload && payload.length) {
     return (
       <div
+        className="rounded-xl p-3 border shadow-lg backdrop-blur-md transition-colors"
         style={{
-          backgroundColor: isDark ? "#1f2937" : "#ffffff",
-          border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
-          borderRadius: "0.75rem",
-          padding: "10px 14px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          backgroundColor: isDark ? "#0f172a" : "#ffffff",
+          borderColor: isDark ? "#1e293b" : "#e2e8f0",
         }}
       >
-        <p style={{ color: isDark ? "#9ca3af" : "#6b7280", fontSize: 11, marginBottom: 4, fontWeight: 600 }}>
+        <p className="text-[11px] font-semibold text-slate-400 mb-1">
           {payload[0].name}
         </p>
-        <p style={{ color: isDark ? "#f9fafb" : "#111827", fontSize: 16, fontWeight: 700 }}>
-          {payload[0].value}
+        <p className="text-base font-bold text-slate-900 dark:text-white">
+          {payload[0].value.toLocaleString()}
         </p>
       </div>
     );
@@ -88,8 +85,8 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {[0, 1].map((i) => (
-          <div key={i} className="bg-card border border-border rounded-xl shadow-sm p-4 h-[350px] flex items-center justify-center">
-            <div className="text-muted-foreground text-sm animate-pulse">Loading chart...</div>
+          <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5 h-[340px] flex items-center justify-center">
+            <div className="text-slate-400 text-xs animate-pulse">Loading analytics...</div>
           </div>
         ))}
       </div>
@@ -101,22 +98,32 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
   const data = [
     { name: "Members", value: counts?.members || 0 },
     { name: "Scholarships", value: counts?.scholarships || 0 },
+    { name: "Applications", value: counts?.scholarshipApplications || 0 },
     { name: "Notices", value: counts?.notices || 0 },
     { name: "Events", value: counts?.events || 0 },
   ];
 
-  const axisColor = isDark ? "#6b7280" : "#9ca3af";
-  const gridColor = isDark ? "#1f2937" : "#f3f4f6";
-  const cursorFill = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
-  const legendColor = isDark ? "#9ca3af" : "#6b7280";
+  const axisColor = isDark ? "#64748b" : "#94a3b8";
+  const gridColor = isDark ? "#1e293b" : "#f1f5f9";
+  const cursorFill = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+  const legendColor = isDark ? "#94a3b8" : "#64748b";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-      {/* Bar Chart */}
-      <div className="bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col h-[350px]">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-foreground">Platform Overview</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Total count per category</p>
+      {/* Category Volumes Bar Chart */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl shadow-sm p-5 flex flex-col h-[350px]">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Institutional Records
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Active directory counts by category
+            </p>
+          </div>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            Current Session
+          </span>
         </div>
         <div className="flex-1 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -145,8 +152,8 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
                 cursor={{ fill: cursorFill }}
                 content={<CustomTooltip isDark={isDark} />}
               />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                {data.map((entry, index) => (
+              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={44}>
+                {data.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Bar>
@@ -155,11 +162,20 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
         </div>
       </div>
 
-      {/* Pie Chart */}
-      <div className="bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col h-[350px]">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-foreground">Distribution Analysis</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Proportional breakdown</p>
+      {/* Proportional Distribution Pie Chart */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl shadow-sm p-5 flex flex-col h-[350px]">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Category Distribution
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Relative share of managed portal data
+            </p>
+          </div>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            Real-time
+          </span>
         </div>
         <div className="flex-1 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -168,13 +184,13 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
                 data={data}
                 cx="50%"
                 cy="45%"
-                innerRadius={60}
-                outerRadius={95}
+                innerRadius={62}
+                outerRadius={96}
                 paddingAngle={4}
                 dataKey="value"
                 stroke="none"
               >
-                {data.map((entry, index) => (
+                {data.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -184,7 +200,7 @@ export default function DashboardChart({ counts }: DashboardChartProps) {
                 height={36}
                 iconType="circle"
                 iconSize={8}
-                wrapperStyle={{ color: legendColor, fontSize: "12px" }}
+                wrapperStyle={{ color: legendColor, fontSize: "11px" }}
               />
             </PieChart>
           </ResponsiveContainer>

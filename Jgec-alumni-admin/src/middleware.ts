@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 function parseJwt(token: string) {
 	try {
 		const base64Url = token.split(".")[1];
+		if (!base64Url) return null;
 		const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
 		const jsonPayload = decodeURIComponent(
 			atob(base64)
@@ -12,81 +13,132 @@ function parseJwt(token: string) {
 				.join("")
 		);
 		return JSON.parse(jsonPayload);
-	} catch (e) {
+	} catch {
 		return null;
 	}
 }
 
 export function middleware(request: NextRequest) {
 	const path = request.nextUrl.pathname;
-	const isPublic = path === "/login";
+	const isPublic = path === "/login" || path === "/reset-password";
 
 	const token =
+		request.cookies.get("accessToken")?.value ||
 		request.cookies.get("tokenAdmin")?.value ||
-		request.cookies.get("tokenMoney")?.value || "";
+		request.cookies.get("tokenMoney")?.value ||
+		"";
 
-	let tokenData = parseJwt(token);	
+	let tokenData = parseJwt(token);
 
-	// Check if token is expired
 	if (tokenData && tokenData.exp) {
 		const currentTime = Math.floor(Date.now() / 1000);
-		
 		if (tokenData.exp < currentTime) {
-			tokenData = null; // Treat as invalid
+			tokenData = null; 
 		}
 	}
 
-	// If the user does not have a valid token (missing, invalid, or expired)
 	if (!tokenData) {
-		
-		const response = isPublic
-			? NextResponse.next()
-			: NextResponse.redirect(new URL("/login", request.nextUrl));
+		const refreshToken = request.cookies.get("refreshToken")?.value;
+		if (refreshToken) {
+			const refreshData = parseJwt(refreshToken);
+			if (
+				refreshData &&
+				refreshData.exp &&
+				refreshData.exp > Math.floor(Date.now() / 1000)
+			) {
+				
+				tokenData = { role: "ADMIN", allowedPaths: [] };
+			}
+		}
+	}
+
+	if (!tokenData) {
+		if (isPublic) {
+			return NextResponse.next();
+		}
+		const response = NextResponse.redirect(new URL("/login", request.nextUrl));
+		response.cookies.delete("accessToken");
 		response.cookies.delete("tokenAdmin");
 		response.cookies.delete("tokenMoney");
 		return response;
 	}
 
-	// If user is logged in and trying to access login page, redirect them accordingly
-	if (isPublic && tokenData) {
-		if (tokenData.role === "admin") {
-			return NextResponse.redirect(new URL("/", request.nextUrl));
-		}
-		if (tokenData.role === "money") {
-			return NextResponse.redirect(new URL("/receipt", request.nextUrl));
+	const rawRole = (tokenData.role || "").toString();
+	const isAdmin =
+		rawRole === "SUPER_ADMIN" ||
+		rawRole === "ADMIN" ||
+		rawRole.toLowerCase() === "admin";
+	const isMoney = rawRole.toLowerCase() === "money";
+
+	let allowedPaths: string[] = tokenData.allowedPaths || [];
+	if (!allowedPaths.length) {
+		const userSessionCookie = request.cookies.get("user_session")?.value;
+		if (userSessionCookie) {
+			try {
+				const parsed = JSON.parse(userSessionCookie);
+				allowedPaths = parsed.allowedPaths || [];
+			} catch {}
 		}
 	}
 
-	// Role-based access control
-	if (tokenData) {
-		if (tokenData.role === "admin") {
-			// admin can access all routes
+	const isWildcard =
+		allowedPaths.includes("*") || rawRole === "SUPER_ADMIN";
+
+	if (isPublic && tokenData) {
+		if (path === "/reset-password") {
 			return NextResponse.next();
-		} else if (tokenData.role === "money") {
-			// money can only access /receipt
-			if (path !== "/receipt") {
-				return NextResponse.redirect(new URL("/receipt", request.nextUrl));
-			}
-		} else {
-			// unknown role - clear cookies and redirect to login
-			const response = NextResponse.redirect(new URL("/login", request.nextUrl));
-			response.cookies.delete("tokenAdmin");
-			response.cookies.delete("tokenMoney");
-			return response;
 		}
+		if (isMoney) {
+			return NextResponse.redirect(new URL("/receipt", request.nextUrl));
+		}
+		const fallback = isWildcard ? "/" : allowedPaths[0] || "/";
+		return NextResponse.redirect(new URL(fallback, request.nextUrl));
+	}
+
+	if (isAdmin) {
+		if (!isWildcard) {
+			const isAllowed = allowedPaths.some(
+				(p: string) =>
+					path === p ||
+					(p !== "/" && path.startsWith(`${p}/`)) ||
+					(p === "/" && path === "/")
+			);
+			if (!isAllowed) {
+				const fallback = allowedPaths[0] || "/";
+				return NextResponse.redirect(new URL(fallback, request.nextUrl));
+			}
+		}
+
+		const response = NextResponse.next();
+
+		if (!request.cookies.has("user_session")) {
+			response.cookies.set(
+				"user_session",
+				JSON.stringify({
+					role: tokenData.role,
+					allowedPaths,
+				}),
+				{ path: "/", httpOnly: false }
+			);
+		}
+
+		return response;
+	} else if (isMoney) {
+		if (path !== "/receipt") {
+			return NextResponse.redirect(new URL("/receipt", request.nextUrl));
+		}
+		return NextResponse.next();
+	} else {
+		const response = NextResponse.redirect(new URL("/login", request.nextUrl));
+		response.cookies.delete("accessToken");
+		response.cookies.delete("tokenAdmin");
+		response.cookies.delete("tokenMoney");
+		return response;
 	}
 }
 
 export const config = {
 	matcher: [
-		"/login",
-		"/",
-		"/gallery",
-		"/members",
-		"/notice",
-		"/events",
-		"/scholarship",
-		"/receipt",
-		"/documents",
+		"/((?!api|_next/static|_next/image|assets|favicon.ico).*)",
 	],
 };

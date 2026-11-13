@@ -73,8 +73,8 @@ const Home: React.FC = () => {
 							<div className="absolute inset-0 bg-[#c4eb80]/40 rounded-3xl transform translate-x-3 translate-y-3 -z-10 transition-transform duration-300 group-hover:translate-x-4 group-hover:translate-y-4"></div>
 							<div className="w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-lg border border-neutral-100 bg-white">
 								<Image
-									src="/assets/Members/BhaskarDasgupta.jpg"
-									alt="President Bhaskar Dasgupta"
+									src="/assets/Members/DilipKumarRoy.jpg"
+									alt="President Dilip Kumar Roy, 1984"
 									width={400}
 									height={500}
 									className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
@@ -87,7 +87,7 @@ const Home: React.FC = () => {
 							<div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-[11px] font-bold uppercase tracking-widest mb-6 shadow-sm">
 								Message from the President
 							</div>
-							
+
 							<div className="text-justify  text-[15px] lg:text-[16px] text-neutral-600 space-y-5 leading-relaxed font-medium">
 								<p className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">Dear Alumni and Friends,</p>
 								<p>
@@ -115,7 +115,7 @@ const Home: React.FC = () => {
 							<div className="mt-10 border-t border-neutral-100 pt-6 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
 								<div className="text-center lg:text-left space-y-1">
 									<p className="text-neutral-500 italic text-sm">With warm regards,</p>
-									<p className="font-bold text-lg text-neutral-900">Bhaskar Dasgupta, 1983</p>
+									<p className="font-bold text-lg text-neutral-900">Dilip Kumar Roy, 1984</p>
 									<p className="text-primary font-semibold text-sm uppercase tracking-wider mt-1">
 										President, JGEC Alumni Association
 									</p>

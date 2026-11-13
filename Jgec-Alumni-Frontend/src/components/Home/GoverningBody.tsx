@@ -52,12 +52,32 @@ const data = [
 		],
 	},
 	{
+		post: "Joint Secretary",
+		member: [
+			{
+				name: "Mr. Pinaki Ranjan Sanyal",
+				timeline: "(1983-1987)",
+				image: "/assets/Members/PinakiRanjanSanyal.jpeg",
+			},
+		],
+	},
+	{
 		post: "Treasurer",
 		member: [
 			{
-				name: "Mr. Arkaprava Das",
+				name: "Mr. Arkaprava Das Choudhury",
 				timeline: "(2012-2016)",
 				image: "/assets/Members/ArkapravaDas.jpeg",
+			},
+		],
+	},
+	{
+		post: "Spokesperson",
+		member: [
+			{
+				name: "Mr. Gautam Bhaduri",
+				timeline: "(1979-1983)",
+				image: "/assets/Members/person-icon-8.png",
 			},
 		],
 	},
@@ -78,26 +98,6 @@ const data = [
 				name: "Mr. Debasish Chatterjee,",
 				timeline: "(1991-1995)",
 				image: "/assets/Members/DebasishChatterjee.jpeg",
-			},
-		],
-	},
-	{
-		post: "Governing Body Member",
-		member: [
-			{
-				name: "Mr. Gautam Bhaduri",
-				timeline: "(1979-1983)",
-				image: "/assets/Members/GautamBhaduri.jpeg",
-			},
-		],
-	},
-	{
-		post: "Governing Body Member",
-		member: [
-			{
-				name: "Mr. Pinaki Ranjan Sanyal",
-				timeline: "(1983-1987)",
-				image: "/assets/Members/PinakiRanjanSanyal.jpeg",
 			},
 		],
 	},

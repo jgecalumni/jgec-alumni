@@ -1,15 +1,26 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { MdDeleteForever } from "react-icons/md";
 import dynamic from "next/dynamic";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
+import {
+	Bell,
+	Plus,
+	Pencil,
+	Trash2,
+	ExternalLink,
+	Calendar,
+	FileText,
+	AlertCircle,
+	CheckCircle2,
+} from "lucide-react";
+
 import { useDeleteNoticeMutation, useGetAllNoticesQuery } from "@/store/feature/notice-feature";
 import Loading from "@/app/loading";
-import toast from "react-hot-toast";
-import { format } from "date-fns"
-import { FaEdit } from "react-icons/fa";
-const ModalNoticeEdit = dynamic(() => import('../Modals/ModalNoticeEdit'), { ssr: false });
+
+const ModalNoticeEdit = dynamic(() => import("../Modals/ModalNoticeEdit"), { ssr: false });
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 const Notice: React.FC = () => {
@@ -20,90 +31,129 @@ const Notice: React.FC = () => {
 
 	useEffect(() => {
 		if (isError) {
-			toast.error((error as any)?.data.message || "Failed to fetch data");
+			toast.error((error as any)?.data?.message || "Failed to fetch notices");
 		}
 		if (deleteIsError) {
-			toast.error((deleteError as any)?.data.message || "Failed to delete notice");
+			toast.error((deleteError as any)?.data?.message || "Failed to delete notice");
 		}
 	}, [isError, error, deleteIsError, deleteError]);
 
 	if (isLoading || deleteLoading) {
-		return <Loading />
+		return <Loading />;
 	}
 
-	const handelDelete = async (id: string) => {
+	const handleDelete = async (id: string) => {
+		if (!window.confirm("Are you sure you want to delete this notice? This action is irreversible.")) {
+			return;
+		}
 		const res = await deleteNotice(id);
 		if (res?.data?.success) {
 			toast.success("Notice deleted successfully");
 			refetch();
 		}
-	}
+	};
 
-	const notices = data?.notices;
+	const notices = data?.notices || [];
 
 	return (
-		<>
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 p-6 lg:p-8 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-indigo-950/40 dark:via-background dark:to-purple-950/40 border border-indigo-100/50 dark:border-indigo-900/50 shadow-sm relative overflow-hidden group">
-				{/* Decorative shapes */}
-				<div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl transition-transform duration-700 group-hover:scale-150 pointer-events-none"></div>
-				<div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl transition-transform duration-700 group-hover:scale-150 pointer-events-none"></div>
-				
-				<div className="flex flex-col mb-4 sm:mb-0 relative z-10">
-					<h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground flex items-center gap-3">
-						<span className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Notice Board</span>
-					</h1>
-					<p className="text-muted-foreground mt-1.5 font-medium">Create, manage and view all platform announcements.</p>
-				</div>
-				<button 
-					className="relative z-10 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold text-sm flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl transition-all duration-300 shadow-md shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-background" 
-					onClick={() => setOpenModal(true)} 
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-					Publish Notice
-				</button>
-			</div>
+		<div className="w-full space-y-6 animate-in fade-in duration-200">
 			
+			{/* Command Header */}
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+				<div>
+					<div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+						<Bell className="w-3.5 h-3.5" />
+						<span>Official Circulars & Bulletins</span>
+					</div>
+					<h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-1">
+						Notice Board
+					</h1>
+					<p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+						Publish, archive, and manage institutional announcements and official notices.
+					</p>
+				</div>
+
+				<div className="flex items-center gap-3">
+					<button
+						onClick={() => setOpenModal(true)}
+						className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all duration-200"
+					>
+						<Plus className="w-4 h-4" />
+						<span>Publish Notice</span>
+					</button>
+				</div>
+			</div>
+
+			{/* Notice List */}
 			<div className="w-full">
-				{notices && notices.length > 0 ? (
-					<div className="relative border-l border-border ml-4 lg:ml-8 space-y-8 pb-8">
-						{notices.map((notice, index) => (
-							<div key={index} className="relative pl-8 lg:pl-10">
-								{/* Timeline Dot */}
-								<div className="absolute left-[-9px] top-1 h-4 w-4 rounded-full border-2 border-primary bg-background shadow-sm"></div>
-								
-								{/* Content Card */}
-								<div className="rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md">
-									<div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border px-6 py-4 bg-muted/30">
-										<div className="font-medium text-sm text-muted-foreground">
-											{format(new Date(notice.date), 'dd MMM, yyyy')}
+				{notices.length > 0 ? (
+					<div className="space-y-4">
+						{notices.map((notice: any) => {
+							let formattedDate = "";
+							try {
+								formattedDate = format(new Date(notice.date || Date.now()), "dd MMM, yyyy");
+							} catch {
+								formattedDate = notice.date;
+							}
+
+							return (
+								<div
+									key={notice.id || notice._id}
+									className="group bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl shadow-sm hover:border-primary/40 hover:shadow-md transition-all overflow-hidden"
+								>
+									{/* Top Meta Bar */}
+									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-3.5 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
+										<div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+											<Calendar className="w-3.5 h-3.5 text-primary" />
+											<span className="font-semibold text-slate-700 dark:text-slate-300">
+												Published: {formattedDate}
+											</span>
+											<span className="inline-block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+											<span className="text-emerald-600 dark:text-emerald-400 font-medium">
+												Live Circular
+											</span>
 										</div>
-										<div className="flex items-center gap-3 mt-3 sm:mt-0">
+
+										<div className="flex items-center gap-2">
 											<button
-												className="p-2 text-emerald-600 bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-md hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
 												onClick={() => setEditNotice(notice)}
+												className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
 												title="Edit Notice"
 											>
-												<FaEdit size={16} />
+												<Pencil className="w-3.5 h-3.5 text-slate-500" />
+												<span>Edit</span>
 											</button>
 											<button
-												className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 dark:text-rose-400 rounded-md hover:bg-rose-200 dark:hover:bg-rose-500/30 transition-colors"
-												onClick={() => handelDelete(notice.id)}
+												onClick={() => handleDelete(notice.id)}
+												className="p-1.5 rounded-lg text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900/50 text-xs font-medium flex items-center gap-1.5 transition-colors"
 												title="Delete Notice"
 											>
-												<MdDeleteForever size={18} />
+												<Trash2 className="w-3.5 h-3.5" />
+												<span>Delete</span>
 											</button>
 										</div>
 									</div>
-									<div className="px-6 py-5">
-										<Link
-											href={notice?.link || "#"}
-											target="_blank"
-											rel="noreferrer"
-											className="inline-block text-xl font-bold text-foreground hover:text-primary transition-colors mb-4"
-										>
-											{notice.title}
-										</Link>
-										<div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground">
+
+									{/* Notice Body */}
+									<div className="p-6">
+										<div className="flex items-start justify-between gap-4 mb-3">
+											<h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-snug">
+												{notice.title}
+											</h3>
+											{notice.link && (
+												<Link
+													href={notice.link}
+													target="_blank"
+													rel="noreferrer"
+													className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0 pt-1"
+												>
+													<span>Attachment</span>
+													<ExternalLink className="w-3.5 h-3.5" />
+												</Link>
+											)}
+										</div>
+
+										<div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
 											<ReactQuill
 												theme="bubble"
 												value={notice.description}
@@ -113,17 +163,32 @@ const Notice: React.FC = () => {
 										</div>
 									</div>
 								</div>
-							</div>
-						))}
+							);
+						})}
 					</div>
 				) : (
-					<div className="w-full h-[40vh] flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-card/50">
-						<h3 className="text-xl font-medium text-foreground">No notices found</h3>
-						<p className="text-muted-foreground mt-2">Create a notice to see it here.</p>
+					<div className="py-16 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
+						<div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-3">
+							<Bell className="w-8 h-8" />
+						</div>
+						<h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+							No notices published
+						</h3>
+						<p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+							Publish an official notification or circular to display on the portal.
+						</p>
+						<button
+							onClick={() => setOpenModal(true)}
+							className="mt-4 inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-semibold py-2 px-4 rounded-xl shadow-sm transition-colors"
+						>
+							<Plus className="w-4 h-4" />
+							<span>Publish First Notice</span>
+						</button>
 					</div>
 				)}
 			</div>
-			
+
+			{/* Edit/Create Notice Modal */}
 			<ModalNoticeEdit
 				open={openModal || !!editNotice}
 				closed={() => {
@@ -133,7 +198,7 @@ const Notice: React.FC = () => {
 				}}
 				data={editNotice}
 			/>
-		</>
+		</div>
 	);
 };
 

@@ -3,6 +3,7 @@ import {
 	adminLogin,
 	adminlogout,
 	allMembers,
+	login,
 	loginMember,
 	logout,
 	memberDetails,
@@ -10,7 +11,7 @@ import {
 	updateMemeber,
 } from "../controller/auth.controller";
 import { upload } from "../middleware/photo-upload";
-import authentication from "../middleware/authentication";
+import authentication, { refreshSession } from "../middleware/authentication";
 
 const router = express.Router();
 
@@ -50,7 +51,7 @@ router.route("/register").post(
 	]),
 	registerMember
 );
-router.route("/admin/login").post(adminLogin);
+router.route("/admin/login").post(login);
 /**
  * @swagger
  * /v1/api/auth/member/login:
@@ -116,5 +117,6 @@ router.route("/update/:id").patch(
 	upload.single("photo"),
 	updateMemeber
 );
+router.post('/refresh', refreshSession);
 
 export default router;
