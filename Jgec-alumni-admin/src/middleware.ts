@@ -46,12 +46,26 @@ export function middleware(request: NextRequest) {
 				refreshData.exp &&
 				refreshData.exp > Math.floor(Date.now() / 1000)
 			) {
-				
-				tokenData = { role: "ADMIN", allowedPaths: [] };
+				let role = "ADMIN";
+				let allowedPaths: string[] = [];
+				const userSessionCookie = request.cookies.get("user_session")?.value;
+				if (userSessionCookie) {
+					try {
+						const parsed = JSON.parse(userSessionCookie);
+						role = parsed.role || "ADMIN";
+						allowedPaths = parsed.allowedPaths || [];
+					} catch {}
+				}
+				tokenData = {
+					userId: refreshData.userId,
+					role,
+					allowedPaths,
+				};
 			}
 		}
 	}
 
+	// Neither accessToken nor refreshToken is valid
 	if (!tokenData) {
 		if (isPublic) {
 			return NextResponse.next();

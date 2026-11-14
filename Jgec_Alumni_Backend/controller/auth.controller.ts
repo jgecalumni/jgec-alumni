@@ -272,9 +272,18 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
 
-	const { refreshToken } = req.cookies;
+	const { refreshToken, accessToken } = req.cookies;
 	if (refreshToken) {
 		await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+	}
+	if (accessToken) {
+		try {
+			const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || "jgec_alumni_secret";
+			const decoded: any = jwt.verify(accessToken, secret);
+			if (decoded?.userId) {
+				await prisma.refreshToken.deleteMany({ where: { userId: decoded.userId } });
+			}
+		} catch {}
 	}
 
 	const origin = req.headers.origin || req.headers.referer || "";
@@ -289,6 +298,7 @@ export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
 		path: "/",
 	};
 
+	res.clearCookie('refreshToken', { ...clearOptions, path: "/v1/api/auth/member/refresh" });
 	res.clearCookie('refreshToken', clearOptions);
 	res.clearCookie('accessToken', clearOptions);
 	res.clearCookie("tokenAdmin", clearOptions);
@@ -297,6 +307,7 @@ export const adminlogout = asyncHandler(async (req: Request, res: Response) => {
 
 	if (isJgecDomain) {
 		const prodClear = { ...clearOptions, domain: ".jgecalumni.in" };
+		res.clearCookie('refreshToken', { ...prodClear, path: "/v1/api/auth/member/refresh" });
 		res.clearCookie('refreshToken', prodClear);
 		res.clearCookie('accessToken', prodClear);
 		res.clearCookie("tokenAdmin", prodClear);
@@ -548,6 +559,7 @@ export const login = async (req: any, res: any) => {
 
 		res.cookie('refreshToken', refreshToken, {
 			...cookieOptions,
+			path: "/",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
