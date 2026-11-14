@@ -95,7 +95,7 @@ const data = [
 		post: "Governing Body Member",
 		member: [
 			{
-				name: "Mr. Debasish Chatterjee,",
+				name: "Mr. Debashish Chatterjee",
 				timeline: "(1991-1995)",
 				image: "/assets/Members/DebasishChatterjee.jpeg",
 			},
