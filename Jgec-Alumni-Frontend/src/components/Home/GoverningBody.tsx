@@ -1,5 +1,6 @@
 "use client"
 import { useGetAllNoticesQuery } from "@/store/feature/notice-feature";
+import { useGetGoverningBodyQuery } from "@/store/feature/governing-body-feature";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
@@ -222,6 +223,47 @@ const GoverningBody = () => {
 		page: 1,
 	});
 
+	const {
+		data: governingBodyData,
+		isLoading: isGBLoading,
+	} = useGetGoverningBodyQuery();
+
+	const displayMembers = React.useMemo(() => {
+		if (governingBodyData?.data && governingBodyData.data.length > 0) {
+			const list: { post: string; name: string; timeline: string; image: string }[] = [];
+			governingBodyData.data.forEach((postItem: any) => {
+				const members = postItem.members || postItem.member || [];
+				if (members.length > 0) {
+					members.forEach((m: any) => {
+						list.push({
+							post: postItem.title || postItem.post || "",
+							name: m.name,
+							timeline: m.timeline || "",
+							image: m.image || "/assets/placeholder-avatar.png",
+						});
+					});
+				} else {
+					list.push({
+						post: postItem.title || postItem.post || "",
+						name: "Vacant",
+						timeline: "",
+						image: "/assets/placeholder-avatar.png",
+					});
+				}
+			});
+			return list;
+		}
+
+		return data.flatMap((item) =>
+			item.member.map((m) => ({
+				post: item.post,
+				name: m.name,
+				timeline: m.timeline,
+				image: m.image,
+			}))
+		);
+	}, [governingBodyData]);
+
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [isHovered, setIsHovered] = useState(false);
 
@@ -256,28 +298,24 @@ const GoverningBody = () => {
 						Governing Body
 					</h1>
 					<div className="grid text-center text-neutral-950 lg:grid-cols-3 grid-cols-2 w-full h-full">
-						{data.map((item, index) => (
+						{displayMembers.map((item, index) => (
 							<div
 								key={index}
 								className="border-r border-b flex flex-col items-center justify-start w-full border-[#91c837]/30 h-auto md:h-72 max-md:py-4 max-md:px-2 p-4">
 								<h1 className="lg:text-[17px] text-base font-semibold mb-4 text-green-900">
 									{item.post}
 								</h1>
-								{item.member.map((member, idx) => (
-									<div
-										key={idx}
-										className="text-neutral-800 font-normal mb-4 flex flex-col items-center">
-										<Image
-											src={member.image}
-											alt={member.name}
-											width={100}
-											height={100}
-											className="object-cover w-[6rem] h-[6rem] overflow-hidden rounded-full border-2 border-white shadow-sm mb-2"
-										/>
-										<div className="text-[14px] font-medium capitalize">{member.name}</div>
-										<h4 className="text-xs md:text-sm text-neutral-700">{member.timeline}</h4>
-									</div>
-								))}
+								<div className="text-neutral-800 font-normal mb-4 flex flex-col items-center">
+									<Image
+										src={item.image}
+										alt={item.name}
+										width={100}
+										height={100}
+										className="object-cover w-[6rem] h-[6rem] overflow-hidden rounded-full border-2 border-white shadow-sm mb-2"
+									/>
+									<div className="text-[14px] font-medium capitalize text-center">{item.name}</div>
+									<h4 className="text-xs md:text-sm text-neutral-700 text-center">{item.timeline}</h4>
+								</div>
 							</div>
 						))}
 					</div>

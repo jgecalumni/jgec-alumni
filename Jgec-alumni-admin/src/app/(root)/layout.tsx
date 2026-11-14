@@ -26,10 +26,11 @@ import {
 	X,
 	ShieldAlert,
 	Lock,
+	Award,
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useLogoutMutation } from "@/store/baseApi";
+import { useLogoutMutation, useGetAdminMeQuery } from "@/store/baseApi";
 import { clearAuthCookies } from "@/app/actions";
 
 const DEFAULT_WIDTH = 260;
@@ -80,6 +81,7 @@ export default function Layout({
 
 	const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 	const [isMounted, setIsMounted] = useState<boolean>(false);
+	const { data: meData } = useGetAdminMeQuery(undefined, { skip: !isMounted });
 
 	useEffect(() => {
 		setIsMounted(true);
@@ -88,6 +90,15 @@ export default function Layout({
 			setCurrentUser(user);
 		}
 	}, []);
+
+	useEffect(() => {
+		if (meData?.user) {
+			setCurrentUser(meData.user);
+			try {
+				localStorage.setItem("user_info", JSON.stringify(meData.user));
+			} catch {}
+		}
+	}, [meData]);
 
 	// Route Authorization check
 	const isPathAllowed = useCallback(
@@ -225,6 +236,14 @@ export default function Layout({
 			activeColor: "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-300 ring-1 ring-cyan-500/30",
 		},
 		{
+			name: "Governing Body",
+			path: "/governing-body",
+			icon: Award,
+			color: "text-amber-500",
+			bgColor: "bg-amber-500/10 dark:bg-amber-500/20",
+			activeColor: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 ring-1 ring-amber-500/30",
+		},
+		{
 			name: "Events & Reunions",
 			path: "/events",
 			icon: CalendarDays,
@@ -310,6 +329,7 @@ export default function Layout({
 	const getPageTitle = () => {
 		if (pathname === "/") return "Executive Dashboard";
 		if (pathname.startsWith("/members")) return "Alumni Directory";
+		if (pathname.startsWith("/governing-body")) return "Governing Body";
 		if (pathname.startsWith("/events")) return "Events & Reunions";
 		if (pathname.startsWith("/notice")) return "Notice Board";
 		if (pathname.startsWith("/scholarship")) return "Scholarships & Grants";

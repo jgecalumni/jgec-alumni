@@ -38,6 +38,7 @@ import {
 	Newspaper,
 	Image as ImageIcon,
 	Bell,
+	Award,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ import {
 const SYSTEM_PATHS = [
 	{ path: "/", label: "Dashboard", category: "Core", icon: Globe },
 	{ path: "/members", label: "Alumni Directory", category: "Core", icon: UsersIcon },
+	{ path: "/governing-body", label: "Governing Body", category: "Core", icon: Award },
 	{ path: "/events", label: "Events & Reunions", category: "Core", icon: Calendar },
 	{ path: "/notice", label: "Notice Board", category: "Core", icon: Bell },
 	{ path: "/scholarship", label: "Scholarships", category: "Core", icon: GraduationCap },

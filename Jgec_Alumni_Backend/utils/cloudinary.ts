@@ -145,3 +145,21 @@ export const uploadMediaPressFileToCloudinary = async (filePath: string) => {
         throw error;
     }
 };
+
+export const uploadGoverningBodyImageToCloudinary = async (filePath: string) => {
+    try {
+        const result = await cloudinary.uploader.upload(filePath, {
+            resource_type: "image",
+            folder: "Governing Body",
+        });
+
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        return { secure_url: result.secure_url, public_id: result.public_id };
+    } catch (error) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        throw error;
+    }
+};

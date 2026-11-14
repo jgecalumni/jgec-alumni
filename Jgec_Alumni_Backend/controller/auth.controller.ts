@@ -503,7 +503,13 @@ export const login = async (req: any, res: any) => {
 		const refreshSecret = process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || "jgec_alumni_refresh_secret";
 
 		const accessToken = jwt.sign(
-			{ userId: user.id, role: user.role, allowedPaths: user.allowedPaths },
+			{
+				userId: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				allowedPaths: user.allowedPaths,
+			},
 			accessSecret,
 			{ expiresIn: '15m' }
 		);
@@ -582,3 +588,68 @@ export const login = async (req: any, res: any) => {
 		});
 	}
 };
+
+export const adminMe = asyncHandler(async (req: any, res: any) => {
+	let token: string | undefined;
+
+	const authHeader = req.headers?.cookie;
+	if (authHeader) {
+		const cookies = Object.fromEntries(
+			authHeader.split('; ').map((c: string) => c.split('='))
+		);
+		token = cookies['accessToken'] || cookies['tokenAdmin'] || cookies['token'];
+	}
+
+	if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+		token = req.headers.authorization.split(" ")[1];
+	}
+
+	if (!token) {
+		return res.status(401).json({
+			success: false,
+			error: true,
+			message: "Access token is missing",
+		});
+	}
+
+	const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || "jgec_alumni_secret";
+	try {
+		const decoded: any = jwt.verify(token, secret);
+		const user = await prisma.user.findUnique({
+			where: { id: decoded.userId },
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				role: true,
+				allowedPaths: true,
+			},
+		});
+
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				error: true,
+				message: "User profile not found",
+			});
+		}
+
+		return res.status(200).json({
+			success: true,
+			error: false,
+			user: {
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				allowedPaths: user.allowedPaths,
+			},
+		});
+	} catch {
+		return res.status(401).json({
+			success: false,
+			error: true,
+			message: "Access token expired or invalid",
+		});
+	}
+});

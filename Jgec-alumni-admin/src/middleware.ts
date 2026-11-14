@@ -116,6 +116,9 @@ export function middleware(request: NextRequest) {
 			response.cookies.set(
 				"user_session",
 				JSON.stringify({
+					id: tokenData.userId,
+					name: tokenData.name,
+					email: tokenData.email,
 					role: tokenData.role,
 					allowedPaths,
 				}),

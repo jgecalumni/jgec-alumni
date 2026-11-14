@@ -17,7 +17,6 @@ const rawBaseQuery = fetchBaseQuery({
     credentials: "include",
 });
 
-// Mutex / in-flight promise to handle concurrent 401s cleanly
 let refreshPromise: Promise<boolean> | null = null;
 
 const baseQueryWithReauth: BaseQueryFn<
@@ -27,7 +26,6 @@ const baseQueryWithReauth: BaseQueryFn<
 > = async (args, api, extraOptions) => {
     let result = await rawBaseQuery(args, api, extraOptions);
 
-    // If 401 Unauthorized or 403 Forbidden, attempt silent token refresh via cookies
     if (result.error && (result.error.status === 401 || result.error.status === 403)) {
         const requestUrl = typeof args === "string" ? args : args.url;
         const isAuthEndpoint =
@@ -69,7 +67,6 @@ const baseQueryWithReauth: BaseQueryFn<
 
             const refreshSuccess = await refreshPromise;
             if (refreshSuccess) {
-                // Retry original query with newly set cookies
                 result = await rawBaseQuery(args, api, extraOptions);
             }
         }
@@ -103,10 +100,19 @@ export const baseApi = createApi({
             }),
             invalidatesTags: ["logout"],
         }),
+        getAdminMe: builder.query<{ success: boolean; user: any }, void>({
+            query: () => ({
+                url: "/auth/member/admin/me",
+                method: "GET",
+                credentials: "include",
+            }),
+            providesTags: ["Users", "login"],
+        }),
     }),
 });
 
 export const {
     useLoginMutation,
     useLogoutMutation,
+    useGetAdminMeQuery,
 } = baseApi;

@@ -107,6 +107,8 @@ export const refreshSession = async (req: Request, res: Response): Promise<void>
 			const newAccessToken = jwt.sign(
 				{
 					userId: savedToken.user.id,
+					name: savedToken.user.name,
+					email: savedToken.user.email,
 					role: savedToken.user.role,
 					allowedPaths: savedToken.user.allowedPaths
 				},
@@ -129,6 +131,17 @@ export const refreshSession = async (req: Request, res: Response): Promise<void>
 			};
 
 			res.cookie('accessToken', newAccessToken, cookieOptions);
+			res.cookie('user_session', JSON.stringify({
+				id: savedToken.user.id,
+				name: savedToken.user.name,
+				email: savedToken.user.email,
+				role: savedToken.user.role,
+				allowedPaths: savedToken.user.allowedPaths,
+			}), {
+				...cookieOptions,
+				httpOnly: false,
+				maxAge: 7 * 24 * 60 * 60 * 1000,
+			});
 
 			res.status(200).json({
 				success: true,

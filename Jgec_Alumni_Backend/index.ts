@@ -18,7 +18,8 @@ import ReceiptRoute from "./router/receipt.route";
 import ContributionRoute from "./router/contribution.route";
 import Media_pressRoute from "./router/media_press.route";
 import SettingsRoute from "./router/settings.route";
-import UserRoute from "./router/user.route"
+import UserRoute from "./router/user.route";
+import GoverningBodyRoute from "./router/governing_body.route";
 
 import { allCounts } from "./controller/count.controller";
 import authentication from "./middleware/authentication";
@@ -301,6 +302,7 @@ app.use("/v1/api/contributions", ContributionRoute);
 app.use("/v1/api/media_press", Media_pressRoute);
 app.use("/v1/api/settings", SettingsRoute);
 app.use("/v1/api/users", UserRoute);
+app.use("/v1/api/governing-body", GoverningBodyRoute);
 
 const server = app.listen(port, () => console.log("🚀[Server]: listening on port " + port));
 server.timeout = 600000;

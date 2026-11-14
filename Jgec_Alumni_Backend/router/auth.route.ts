@@ -2,6 +2,7 @@ import express from "express";
 import {
 	adminLogin,
 	adminlogout,
+	adminMe,
 	allMembers,
 	login,
 	loginMember,
@@ -52,6 +53,8 @@ router.route("/register").post(
 	registerMember
 );
 router.route("/admin/login").post(login);
+router.route("/admin/me").get(adminMe);
+router.route("/me").get(adminMe);
 /**
  * @swagger
  * /v1/api/auth/member/login:

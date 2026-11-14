@@ -242,6 +242,28 @@ model GlobalSettings {
   updatedAt              DateTime  @updatedAt
 }
 
+model GoverningBodyPost {
+  id        Int                   @id @default(autoincrement())
+  title     String                @db.VarChar(200)
+  order     Int                   @default(0)
+  members   GoverningBodyMember[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @default(now()) @updatedAt
+}
+
+model GoverningBodyMember {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(200)
+  timeline        String            @default("") @db.VarChar(200)
+  image           String            @db.VarChar(500)
+  image_public_id String?           @db.VarChar(200)
+  order           Int               @default(0)
+  postId          Int
+  post            GoverningBodyPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+}
+
 enum Role {
   ADMIN
   SUPER_ADMIN
