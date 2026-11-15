@@ -1,18 +1,10 @@
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-function parseJwt(token: string) {
+function parseJwt(token?: string) {
+	if (!token) return null;
 	try {
-		const base64Url = token.split(".")[1];
-		if (!base64Url) return null;
-		const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-		const jsonPayload = decodeURIComponent(
-			atob(base64)
-				.split("")
-				.map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-				.join("")
-		);
-		return JSON.parse(jsonPayload);
+		const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+		return JSON.parse(atob(base64));
 	} catch {
 		return null;
 	}
@@ -21,146 +13,110 @@ function parseJwt(token: string) {
 export function middleware(request: NextRequest) {
 	const path = request.nextUrl.pathname;
 	const isPublic = path === "/login" || path === "/reset-password";
+	const now = Math.floor(Date.now() / 1000);
 
-	const token =
-		request.cookies.get("accessToken")?.value ||
-		request.cookies.get("tokenAdmin")?.value ||
-		request.cookies.get("tokenMoney")?.value ||
-		"";
+	const refreshData = parseJwt(request.cookies.get("refreshToken")?.value);
+	const hasValidRefresh = Boolean(
+		refreshData && (!refreshData.exp || refreshData.exp > now)
+	);
 
-	let tokenData = parseJwt(token);
-
-	if (tokenData && tokenData.exp) {
-		const currentTime = Math.floor(Date.now() / 1000);
-		if (tokenData.exp < currentTime) {
-			tokenData = null; 
-		}
-	}
-
-	if (!tokenData) {
-		const refreshToken = request.cookies.get("refreshToken")?.value;
-		if (refreshToken) {
-			const refreshData = parseJwt(refreshToken);
-			if (
-				refreshData &&
-				refreshData.exp &&
-				refreshData.exp > Math.floor(Date.now() / 1000)
-			) {
-				let role = "ADMIN";
-				let allowedPaths: string[] = [];
-				const userSessionCookie = request.cookies.get("user_session")?.value;
-				if (userSessionCookie) {
-					try {
-						const parsed = JSON.parse(userSessionCookie);
-						role = parsed.role || "ADMIN";
-						allowedPaths = parsed.allowedPaths || [];
-					} catch {}
-				}
-				tokenData = {
-					userId: refreshData.userId,
-					role,
-					allowedPaths,
-				};
-			}
-		}
-	}
-
-	// Neither accessToken nor refreshToken is valid
-	if (!tokenData) {
+	// If no valid refresh token is present, logout automatically
+	if (!hasValidRefresh) {
 		if (isPublic) {
-			return NextResponse.next();
+			const res = NextResponse.next();
+			if (request.cookies.has("accessToken")) res.cookies.delete("accessToken");
+			if (request.cookies.has("user_session")) res.cookies.delete("user_session");
+			return res;
 		}
 		const response = NextResponse.redirect(new URL("/login", request.nextUrl));
 		response.cookies.delete("accessToken");
-		response.cookies.delete("tokenAdmin");
-		response.cookies.delete("tokenMoney");
+		response.cookies.delete("user_session");
 		return response;
 	}
 
-	const rawRole = (tokenData.role || "").toString();
-	const isAdmin =
-		rawRole === "SUPER_ADMIN" ||
-		rawRole === "ADMIN" ||
-		rawRole.toLowerCase() === "admin";
-	const isMoney = rawRole.toLowerCase() === "money";
-
-	let allowedPaths: string[] = tokenData.allowedPaths || [];
-	if (!allowedPaths.length) {
-		const userSessionCookie = request.cookies.get("user_session")?.value;
-		if (userSessionCookie) {
-			try {
-				const parsed = JSON.parse(userSessionCookie);
-				allowedPaths = parsed.allowedPaths || [];
-			} catch {}
-		}
+	// Refresh token is valid; resolve accessToken or fallback to session
+	let tokenData = parseJwt(request.cookies.get("accessToken")?.value);
+	if (tokenData?.exp && tokenData.exp <= now) {
+		tokenData = null;
 	}
 
-	const isWildcard =
-		allowedPaths.includes("*") || rawRole === "SUPER_ADMIN";
+	if (!tokenData) {
+		let session: Record<string, any> = {};
+		try {
+			session = JSON.parse(request.cookies.get("user_session")?.value || "{}");
+		} catch {}
 
-	if (isPublic && tokenData) {
-		if (path === "/reset-password") {
-			return NextResponse.next();
-		}
-		if (isMoney) {
-			return NextResponse.redirect(new URL("/receipt", request.nextUrl));
-		}
-		const fallback = isWildcard ? "/" : allowedPaths[0] || "/";
-		return NextResponse.redirect(new URL(fallback, request.nextUrl));
+		tokenData = {
+			userId: refreshData.userId,
+			role: session.role || "ADMIN",
+			allowedPaths: session.allowedPaths || [],
+		};
 	}
 
-	if (isAdmin) {
-		if (!isWildcard) {
-			const isAllowed = allowedPaths.some(
-				(p: string) =>
-					path === p ||
-					(p !== "/" && path.startsWith(`${p}/`)) ||
-					(p === "/" && path === "/")
-			);
-			if (!isAllowed) {
-				const fallback = allowedPaths[0] || "/";
-				return NextResponse.redirect(new URL(fallback, request.nextUrl));
-			}
-		}
-
-		const response = NextResponse.next();
-
-		if (!request.cookies.has("user_session")) {
-			const isJgec = request.nextUrl.hostname.includes("jgecalumni.in");
-			response.cookies.set(
-				"user_session",
-				JSON.stringify({
-					id: tokenData.userId,
-					name: tokenData.name,
-					email: tokenData.email,
-					role: tokenData.role,
-					allowedPaths,
-				}),
-				{
-					path: "/",
-					httpOnly: false,
-					...(isJgec ? { domain: ".jgecalumni.in" } : {}),
+	const role = String(tokenData.role || "").toUpperCase();
+	const isMoney = role === "MONEY";
+	const allowedPaths: string[] = tokenData.allowedPaths?.length
+		? tokenData.allowedPaths
+		: (() => {
+				try {
+					return JSON.parse(request.cookies.get("user_session")?.value || "{}").allowedPaths || [];
+				} catch {
+					return [];
 				}
-			);
-		}
+		  })();
 
-		return response;
-	} else if (isMoney) {
+	const isWildcard = role === "SUPER_ADMIN" || allowedPaths.includes("*");
+
+	// Authenticated user accessing public routes
+	if (isPublic) {
+		if (path === "/reset-password") return NextResponse.next();
+		const home = isMoney ? "/receipt" : isWildcard ? "/" : allowedPaths[0] || "/";
+		return NextResponse.redirect(new URL(home, request.nextUrl));
+	}
+
+	// MONEY role restricted to /receipt
+	if (isMoney) {
 		if (path !== "/receipt") {
 			return NextResponse.redirect(new URL("/receipt", request.nextUrl));
 		}
 		return NextResponse.next();
-	} else {
-		const response = NextResponse.redirect(new URL("/login", request.nextUrl));
-		response.cookies.delete("accessToken");
-		response.cookies.delete("tokenAdmin");
-		response.cookies.delete("tokenMoney");
-		return response;
 	}
+
+	// Role-based route guard
+	if (!isWildcard) {
+		const isAllowed = allowedPaths.some(
+			(p: string) => path === p || (p !== "/" && path.startsWith(`${p}/`))
+		);
+		if (!isAllowed) {
+			return NextResponse.redirect(new URL(allowedPaths[0] || "/", request.nextUrl));
+		}
+	}
+
+	const response = NextResponse.next();
+
+	// Ensure user_session cookie is populated for client-side consumption
+	if (!request.cookies.has("user_session") && tokenData.userId) {
+		const isJgec = request.nextUrl.hostname.includes("jgecalumni.in");
+		response.cookies.set(
+			"user_session",
+			JSON.stringify({
+				id: tokenData.userId,
+				name: tokenData.name,
+				email: tokenData.email,
+				role: tokenData.role,
+				allowedPaths,
+			}),
+			{
+				path: "/",
+				httpOnly: false,
+				...(isJgec ? { domain: ".jgecalumni.in" } : {}),
+			}
+		);
+	}
+
+	return response;
 }
 
 export const config = {
-	matcher: [
-		"/((?!api|_next/static|_next/image|assets|favicon.ico).*)",
-	],
+	matcher: ["/((?!api|_next/static|_next/image|assets|favicon.ico).*)"],
 };
